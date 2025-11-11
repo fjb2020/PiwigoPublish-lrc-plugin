@@ -2,7 +2,7 @@
 -- Piwigo API
 -- *************************************************
 -- see https://github.com/Piwigo/Piwigo/wiki/Piwigo-Web-API
--- suppoorts piwigo v16 with apiKey - https://piwigo.org/forum/viewtopic.php?id=34465
+-- supports piwigo v16 with apiKey - https://piwigo.org/forum/viewtopic.php?id=34465
 
 PWAPI = {}
 PWAPI.__index = PWAPI

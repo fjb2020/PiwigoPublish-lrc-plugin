@@ -149,7 +149,7 @@ end
 function PublishTask.deletePhotosFromPublishedCollection(publishSettings, arrayOfPhotoIds, deletedCallback, localCollectionId)
 
     
-    local debug = true
+    local debug = false
     local callStatus ={}
     if debug then
         log:trace('PublishTask.deletePhotosFromPublishedCollection - publishSettings:\n' .. utils.serialiseVar(publishSettings))
@@ -199,6 +199,11 @@ function PublishTask.renamePublishedCollection(publishSettings, info)
 end
 
 -- ************************************************
+function PublishTask.addCommentToPublishedPhoto( publishSettings, remotePhotoId, commentText )
+    log:trace("PublishTask.addCommentToPublishedPhoto")
+end
+
+-- ************************************************
 function PublishTask.shouldDeletePhotosFromServiceOnDeleteFromCatalog(publishSettings, nPhotos)
     log:trace("PublishTask.shouldDeletePhotosFromServiceOnDeleteFromCatalog")
     return nil -- Show builtin Lightroom dialog.
@@ -233,7 +238,7 @@ end
 function PublishTask.reparentPublishedCollection( publishSettings, info )
   -- ablums being rearranged in publish service
     -- neee to reflect this in piwigo
-    local debug = true
+    local debug = false
     local callStatus ={}
     if debug then
         log:trace("PublishTask.reparentPublishedCollection - publishSettings:\n" .. utils.serialiseVar(publishSettings))

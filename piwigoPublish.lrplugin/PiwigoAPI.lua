@@ -323,7 +323,6 @@ local function createCollection(propertyTable, node, parentNode, isLeafNode, sta
     local catalog = LrApplication.activeCatalog()
     local stat = statusData
 
-    -- log:trace("createCollection - for " .. node.id,node.name)
     -- getPublishService to get reference to this publish service - returned in propertyTable._service
     -- needs to be refreshed each time  to relfect lastest state of publishedCollections created further below
     rv = PiwigoAPI.getPublishService(propertyTable, false)
@@ -336,8 +335,6 @@ local function createCollection(propertyTable, node, parentNode, isLeafNode, sta
         LrErrors.throwUserError("Error in createCollection: Piwigo publish service is nil.")
         return false
     end
-
-
      -- get parent collection or collection set
     if parentNode == "" then
         -- no parent node so we start at root with the publishService
@@ -359,40 +356,33 @@ local function createCollection(propertyTable, node, parentNode, isLeafNode, sta
     else
         if not(existingColl) then
             -- not an existing collection/set for this node and we have got the parent collection/set
-            if parentColl.type ~= "LrPublishedCollectionSet" and parentColl.type ~= "LrPublishService" then
+            if parentColl:type() ~= "LrPublishedCollectionSet" and parentColl:type() ~= "LrPublishService" then
                 -- parentColl is not of type that can accept child collections - need to handle
-                LrErrors.throwUserError("Error in createCollection: Parent collection for " .. node.name .. " is " .. parentColl.type .. " - can't create child collection")
+                LrErrors.throwUserError("Error in createCollection: Parent collection for " .. node.name .. " is " .. parentColl:type() .. " - can't create child collection")
                 stat.errors = stat.errors + 1
             else
                 if isLeafNode then
                     -- create collection
-                    -- log:trace("createCollection - Creating collection for category " .. node.id .. " - " .. node.name)
+
                     catalog:withWriteAccessDo("Create PublishedCollection ", function()
                         newColl = publishService:createPublishedCollection( node.name, parentColl, true )
                     end)
                     stat.collections = stat.collections + 1
-                    -- log:trace("createCollection - Created collection for category " .. node.id .. " - " .. node.name)
                 else
-                    -- create collectionSet
                     -- Create a new collection set for intermediate levels
-                    -- log:trace("createCollection - Creating collection set for category " .. node.id .. " - " .. node.name) 
                     catalog:withWriteAccessDo("Create PublishedCollectionSet ", function() 
                         newColl = publishService:createPublishedCollectionSet( node.name, parentColl, true )
                     end)
                     stat.collectionSets = stat.collectionSets + 1
-                    -- log:trace("createCollection - Created collection set for category " .. node.id .. " - " .. node.name)
                 end
-
                 -- now add remoteids and urls to collections and collection sets
                 catalog:withWriteAccessDo("Add Piwigo details to collections", function() 
-                    -- log:trace("createCollection - Setting remoteId and remoteUrl for category " .. node.id .. " - " .. node.name .. " in collection/set " .. newColl:getName() .. " which is a " .. newColl:type())
-                    newColl:setRemoteId( node.id )
+                     newColl:setRemoteId( node.id )
                     newColl:setRemoteUrl( propertyTable.host .. "/index.php?/category/" .. node.id )
                     newColl:setName( node.name )
                 end)
             end
         else
-            -- log:trace("createCollection - skipped creation as it exists")
             stat.existing = stat.existing + 1
         end
     end
@@ -406,20 +396,18 @@ local function traverseChildren(node, parentNode, propertyTable, statusData, dep
     -- Traverses a hierarchy recursively, creates collections or collections sets as needed
     -- 'node' is a table representing a category (or the root list).
     -- 'parenNode' is the node of which this node is a child
+    -- 'statusData' tracks new and existing collections and sets
     -- 'depth' is used internally to track nesting level.
 
     local stat = statusData
     depth = depth or 0
-    log:info("Traversing " .. node.name .. " statusData is \n" .. utils.serialiseVar(stat))
-
+    -- log:info("Traversing " .. node.name .. " statusData is \n" .. utils.serialiseVar(stat))
     if type(node) == 'table' and node.id then
         -- create collection or collectionSet
         local isLeafNode = false
         if node.nb_categories == 0 then
             isLeafNode = true
-            -- log:trace("Processing leaf node " .. node.id, node.name .. " depth " .. depth)
         else
-            -- log:trace("Processing set node " .. node.id, node.name .. " depth " .. depth)
         end
         local rv = createCollection(propertyTable, node, parentNode, isLeafNode, stat)
     end
@@ -491,9 +479,8 @@ function PiwigoAPI.importAlbums(propertyTable, debug)
     local catHierarchy = buildCatHierarchy(allCats)
 
     -- in Piwigo an album can have photos as well as sub-albums. In LrC, a collectionset does not have photos
-    -- ToDo - deal with this via createing a collection within each collection set for photos at this level in Piwigo
+    -- ToDo - deal with this via creating a collection within each collection set for photos at this level in Piwigo - so called super-album
     local statusData = {
-        test = "Hello World",
         existing = 0,
         collectionSets = 0,
         collections = 0,

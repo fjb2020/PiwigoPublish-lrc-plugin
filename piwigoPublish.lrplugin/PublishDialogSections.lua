@@ -133,7 +133,7 @@ end
 local function prefsDialog (f, propertyTable)
 	local bind = LrView.bind
 	local share = LrView.share
-	local debug = true
+	local debug = false
 
 	-- get reference to this 
 
