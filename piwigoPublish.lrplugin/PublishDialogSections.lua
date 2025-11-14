@@ -67,87 +67,125 @@ local function connectionDialog (f, propertyTable, pwInstance)
 	local bind = LrView.bind
 	local share = LrView.share
 
-	return {
+return {
+    title = "Piwigo Host Settings",
+    bind_to_object = propertyTable,
 
-		title = "Piwigo Host Settings",
-		bind_to_object = propertyTable,
-		f:row {
-			f:static_text {
-				title = "Piwigo Host:",
-				alignment = 'right',
-				width = share 'labelWidth'
+	f:row {
+		spacing = 60,
+		f:picture {
+			value = _PLUGIN:resourceId( "icons/icon_med.png" ),
 
+		},
+		f:column {
+			spacing = f:control_spacing(),
+			f:row {
+				f:static_text {
+					title = "",
+					alignment = 'left',
+					width = share 'labelWidth',
+				},
 			},
-			f:edit_field {
-				value = bind 'host',
-				truncation = 'middle',
-				immediate = false,
-				fill_horizontal = 1,
-				validate = function (v, host)
-					local sanitizedURL = pwInstance:sanityCheckAndFixURL(host)
-					if sanitizedURL == host then
-						return true, host, ''
-					elseif not (sanitizedURL == nil) then
-						LrDialogs.message('Entered URL was autocorrected to ' .. sanitizedURL)
-						return true, sanitizedURL, ''
-					end
-					return false, host, 'Entered URL not valid.\nShould look like https://piwigo.domain.uk'
-				end,
+			f:row {
+				f:static_text {
+					title = "Piwigo Publisher Plugin",
+					alignment = 'left',
+					width = share 'labelWidth',
+				},
 			},
-			f:push_button {
-				title = 'Check connection',
-				enabled = bind('ConCheck', propertyTable),
-				action = function(button)
-					LrTasks.startAsyncTask(function()
-						if not(PiwigoAPI.login(propertyTable)) then
-							LrDialogs.message('Connection NOT successful')
-						end
-					end)
-				end,
+			f:row {
+				f:static_text {
+					title = "Plugin Version 0.9.4",
+					alignment = 'left',
+					width = share 'labelWidth',
+				},
 			},
 		},
+	},
+    --f:column {
+        spacing = f:control_spacing(),
 
-		f:row {
-			f:static_text {
-				title = "User Name:",
-				alignment = 'right',
-				width = share 'labelWidth',
-				visible = bind 'hasNoError',
-			},
-			f:edit_field {
-				value = bind 'userName',
-				width_in_chars = 24,
-				truncation = 'middle',
-				immediate = true,
-				fill_horizontal = 1,
-			},
-		},
+        f:row {
+            f:static_text {
+                title = "Piwigo Host:",
+                alignment = 'right',
+                width = share 'labelWidth',
+            },
 
-		f:row {
-			f:static_text {
-				title = "Password:",
-				alignment = 'right',
-				width = share 'labelWidth',
-				visible = bind 'hasNoError',
-			},
-			f:password_field {
-				value = bind 'userPW',
-				truncation = 'middle',
-				immediate = true,
-				fill_horizontal = 1,
-			},
-		},
-		f:row {
+            f:edit_field {
+                value = bind 'host',
+                truncation = 'middle',
+                immediate = false,
+                fill_horizontal = 1,
 
-			f:static_text {
-				title = bind 'ConStatus',
-				alignment = 'center',
-				fill_horizontal = 1,
-				width = share 'labelWidth',
-			},		
-		},
+                validate = function(v, host)
+                    local sanitizedURL = pwInstance:sanityCheckAndFixURL(host)
+                    if sanitizedURL == host then
+                        return true, host, ''
+                    elseif sanitizedURL ~= nil then
+                        LrDialogs.message('Entered URL was autocorrected to ' .. sanitizedURL)
+                        return true, sanitizedURL, ''
+                    end
+                    return false, host, 'Entered URL not valid.\nShould look like https://piwigo.domain.uk'
+                end,
+            },
 
-	}
+            f:push_button {
+                title = 'Check connection',
+                enabled = bind('ConCheck', propertyTable),
+                action = function(button)
+                    LrTasks.startAsyncTask(function()
+                        if not PiwigoAPI.login(propertyTable) then
+                            LrDialogs.message('Connection NOT successful')
+                        end
+                    end)
+                end,
+            },
+        },
+
+        f:row {
+            f:static_text {
+                title = "User Name:",
+                alignment = 'right',
+                width = share 'labelWidth',
+                visible = bind 'hasNoError',
+            },
+
+            f:edit_field {
+                value = bind 'userName',
+                width_in_chars = 24,
+                truncation = 'middle',
+                immediate = true,
+                fill_horizontal = 1,
+            },
+        },
+
+        f:row {
+            f:static_text {
+                title = "Password:",
+                alignment = 'right',
+                width = share 'labelWidth',
+                visible = bind 'hasNoError',
+            },
+
+            f:password_field {
+                value = bind 'userPW',
+                truncation = 'middle',
+                immediate = true,
+                fill_horizontal = 1,
+            },
+        },
+
+        f:row {
+            f:static_text {
+                title = bind 'ConStatus',
+                alignment = 'center',
+                fill_horizontal = 1,
+                width = share 'labelWidth',
+            },
+        },
+    --},
+}
 end
 
 -- *************************************************
@@ -168,8 +206,7 @@ local function prefsDialog (f, propertyTable)
 				fill_horizontal = 1,
 			},		
 		},
-		
-		f:spacer { height = 10 },
+		f:spacer { height = 3 },
 		f:row {
 			f:static_text {
 				title = "Import existing albums from Piwigo",
@@ -197,7 +234,7 @@ local function prefsDialog (f, propertyTable)
 				fill_horizontal = 1,
 			},
 		},
-
+	--[[
 		f:spacer { height = 5 },
 		f:row {
         	f:static_text {
@@ -213,7 +250,7 @@ local function prefsDialog (f, propertyTable)
 				tooltip = "Create special collections to allow images to be published to albums with sub-albums on Piwigo"
         	},
    		},
-		--[[
+	
 		f:spacer { height = 10 },
 		f:row {
 			f:static_text {
