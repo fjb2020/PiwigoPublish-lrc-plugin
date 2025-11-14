@@ -134,7 +134,6 @@ function utils.findNode(xmlNode,  nodeName )
     return nil
 end
 
-
 -- *************************************************
 function utils.fileExists(fName)
 
@@ -173,7 +172,6 @@ function utils.tabletoString(inTable, delim)
 
     return rtnString
 end
-
 
 -- *************************************************
 function utils.tagParse(tag)
@@ -251,7 +249,6 @@ function utils.GetLrKeyword(LrKeywords,keywordName)
     return nil
     
 end
-
 
 -- *************************************************
 function utils.checkKw(thisPhoto, searchKw)
@@ -388,13 +385,6 @@ function utils.clean_spaces(text)
 end
 
 -- *************************************************
-local function trim(s)
-    -- Check if val is empty or nil
-    -- Taken from https://github.com/midzelis/mi.Immich.Publisher/blob/main/utils.lua
-    return s:match("^%s*(.-)%s*$")
-end
-
--- *************************************************
 function utils.nilOrEmpty(val)
 
     if val == nil then
@@ -524,242 +514,6 @@ function utils.extract_cookies(raw)
   return cookies
 
 end
-
--- *************************************************
-function utils.build_url(base, params)
-  -- Helper to build GET URL with params
-    local query = {}
-    for k, v in pairs(params) do
-        table.insert(query, url.escape(k) .. "=" .. url.escape(v))
-    end
-    return base .. "?" .. table.concat(query, "&")
-end
-
--- *************************************************
-function utils.cURL_parse(result)
-  local parse_table = {}
-  local thisline = 1
-
-  for line,newline in result:gmatch'([^\r\n]*)([\r\n]*)' do
-    parse_table[thisline] = line
-    thisline = thisline + 1
-  end
-
-  return parse_table
-
-end
-
--- *************************************************
-function utils.cURLcall(url)
-  local restCMD = "curl --silent -i " .. url
-  local result
-  local payload = ""
-
-  local cURLOutput = {} -- used to return status, errors and cURL results
-
-  cURLOutput[1] = false
-  local handle = io.popen(restCMD,"r")
-  local linecount=1
-  if handle then
-    result = handle:read("*a")
-    handle:close()
-  else
-    cURLOutput[2] = "Could not execute " .. restCMD
-    return cURLOutput
-  end
-
-  local cURL_Parsed = utils.cURL_parse(result)
-  -- http_code is second field (space delimited) of first element of cURL_Parsed
-  local http_resp = utils.stringtoTable(cURL_Parsed[1]," ")
-  local http_code = http_resp[2]
-  if http_code ~= "200" then
-    cURLOutput[2] = string.format("REST Service for %s returned http code %s", url, http_code )
-    return cURLOutput
-  end
-
-  -- look for line with main payload
-  for ii,value in ipairs(cURL_Parsed) do
-    if (string.sub(value,1,3) == '[{"') or (string.sub(value,1,2) == '{"') then
-      payload = value
-      break
-    end
-  end
-  cURLOutput[1] = true
-  cURLOutput[2] = "OK"
-  cURLOutput[3] = http_code
-  cURLOutput[4] = payload
-  return cURLOutput
-end
-
--- *************************************************
-function utils.httpGet(url)
-  local payload = ""
-
-  local cURLOutput = {} -- used to return status, errors and http results
-  cURLOutput[1] = false
-  local respParsed
-
-  local httpResponse, httpHeaders = LrHttp.get(url)
-
-    log.debug("httpget - calling " .. url)
-    log.debug("headers are " .. utils.serialiseVar(httpHeaders))
-
-  if httpResponse then
-    respParsed = utils.cURL_parse(httpResponse)
-    payload = respParsed[1]
-    cURLOutput[1] = true
-    cURLOutput[2] = httpHeaders.statusDes
-    cURLOutput[3] = httpHeaders.status
-    cURLOutput[4] = payload
-  else
-    if httpHeaders.error then
-      cURLOutput[2] = httpHeaders.error.name
-      cURLOutput[3] = httpHeaders.error.errorCode
-    else
-      cURLOutput[2] = httpHeaders.statusDes
-      cURLOutput[3] = httpHeaders.status
-    end
-  end
-
-  return cURLOutput
-end
-
--- *************************************************
-function utils.CallAPIGet(url)
-  local cURLOutput = utils.httpGet(url)
-  local status = cURLOutput[1]
-  local statusMsg = cURLOutput[2]
-  local http_code = cURLOutput[3]
-  local payload = cURLOutput[4]
-  local parsePayload
-
-    log.debug("Url is " .. url)
-    log.debug("cURLOutput is " .. utils.serialiseVar(cURLOutput))
-    log.debug("payload is " .. type(payload) .. " - "  .. utils.serialiseVar(payload))
-
-  if not status then
-    local err = "Call to " .. url .. " failed - " .. http_code .. ", " .. statusMsg
-    LrDialogs.message("APIGet Failed", err, "critical")
-    return nil
-  end
-
-  if type(payload) == "string" and (payload == "[]" or payload == "{}") then
-    parsePayload = ""
-  else
-    parsePayload = JSON:decode(payload)
-  end
-
-  --log.debug("parsepayload is " .. type(parsePayload) .. " - "  .. utils.serialiseVar(parsePayload))
-  return parsePayload
-end
-
--- *************************************************
-function utils.httpPost(url, params)
-  local cURLOutput = {} -- used to return status, errors and http results
-  cURLOutput[1] = false
-  local jsonBody = JSON:encode(params)
-  
-  local headers = {
-    { field = 'Content-Type', value = 'application/json' }
-  }
-
-    log.debug("Http Post " .. url)
-    log.debug("params " .. utils.serialiseVar(params))
-
-  local result, httpHeaders = LrHttp.post(url, jsonBody, headers)
-
-    log.debug("Result is " .. utils.serialiseVar(result))
-    log.debug("Headers are " .. utils.serialiseVar(httpHeaders))
-
-
-
-  if httpHeaders.status == 201 then
-    cURLOutput[1] = true
-    cURLOutput[2] = httpHeaders.statusDes
-    cURLOutput[3] = httpHeaders.status
-    cURLOutput[4] = result
-  else
-    if httpHeaders.error then
-      cURLOutput[2] = httpHeaders.error.name
-      cURLOutput[3] = httpHeaders.error.errorCode
-    else
-      cURLOutput[2] = httpHeaders.statusDes
-      cURLOutput[3] = httpHeaders.status
-    end
-  end
-  return cURLOutput
-
-end
-
--- *************************************************
-function utils.CallAPIPost(url, urlParams, table)
-  local cURLOutput = utils.httpPost(url, urlParams)
-  local status = cURLOutput[1]
-  local statusMsg = cURLOutput[2]
-  local http_code = cURLOutput[3]
-  local payload = cURLOutput[4]
-  local parsePayload
-  if not status then
-    local err = "Call to " .. url .. " failed - " .. http_code .. ", " .. statusMsg
-    LrDialogs.message("API Post for " .. table .. " Failed", err, "critical")
-    return nil
-  end
-
-    log.debug("Url is " .. url)
-    log.debug("cURLOutput is " .. utils.serialiseVar(cURLOutput))
-    log.debug("payload is " .. type(payload) .. " - "  .. utils.serialiseVar(payload))
-
-  if type(payload) == "string" and (payload == "[]" or payload == "{}") then
-    parsePayload = ""
-  else
-    parsePayload = JSON:decode(payload)
-  end
-  --log.debug("parsePayload is " .. utils.serialiseVar(parsePayload))
-  return parsePayload
-end
-
--- *************************************************
-function utils.httpPostWithSink(url, body, headers, onDone, onError)
-  log.debug("In httpPostWithSink function")
-  local chunks, rawCookies = {}, {}
-
-  local sink = {
-      onHeaders = function(status, message, responseHeaders)
-          for _, h in ipairs(responseHeaders or {}) do
-              if h.field:lower() == "set-cookie" then
-                  table.insert(rawCookies, h.value)
-              end
-          end
-      end,
-
-      onBody = function(chunk)
-          if chunk and #chunk > 0 then
-              table.insert(chunks, chunk)
-          end
-          return true
-      end,
-
-      onComplete = function()
-          local response = table.concat(chunks)
-          local parsedCookies = utils.extract_cookies(rawCookies)
-          if onDone then
-              onDone(response, parsedCookies, rawCookies)
-          end
-      end,
-
-      onError = function(message)
-          if onError then
-              onError(message)
-          end
-      end,
-  }
-
-  return LrHttp.post(url, body, headers, sink)
-end
-
-
-
-
 
 
 -- *************************************************
