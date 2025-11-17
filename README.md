@@ -20,7 +20,7 @@ Currently at beta 0.9.4 version
 
 ## CAUTION
 
-The plugin does not currently support concurrent operations - so please do not attempt to carry out an operation in the plugin if another is running. This is most likely if in the middle of a large publishing operation you wish to say create/change/delete an album. The plugin is likely to crash with un-predicatable consequences if this is attempted.
+The plugin does not currently support concurrent operations - so please do not attempt to carry out an operation in the plugin if another is running. For example, if in the middle of a large publishing operation you wish to say create/change/delete an album - the plugin is likely to crash with un-predicatable consequences if this is attempted.
 
 ## The following functionality is under development:
 

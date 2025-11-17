@@ -50,9 +50,6 @@ _G.LrExportSettings = import "LrExportSettings"
 -- Global requires
 _G.JSON = require "JSON"
 _G.utils = require "utils"
--- _G.defs = require "PWDefinitions"
-_G.PWUtils = require "PiwigoAPI"
-_G.PWSession = require "PWSession"
 _G.PiwigoAPI = require "PiwigoAPI"
 _G.log = require("logger")
 

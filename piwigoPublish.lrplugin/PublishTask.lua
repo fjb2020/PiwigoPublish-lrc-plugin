@@ -32,11 +32,8 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
     local callStatus ={}
     local exportSession = exportContext.exportSession
     local propertyTable = exportContext.propertyTable
-
-    log.debug('PublishTask.processRenderedPhotos - publishSettings:\n' .. utils.serialiseVar(propertyTable))
-
-
-    -- Set progress title.
+    local rv
+        -- Set progress title.
     local nPhotos = exportSession:countRenditions()
     local progressScope = exportContext:configureProgress {
         title = "Publishing " .. nPhotos .. " photos to " .. propertyTable.host
@@ -44,32 +41,26 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
 
     -- check connection to piwigo
     if not (propertyTable.Connected) then
-        log.debug("PublishTask.processRenderedPhotos - logging in")
         rv = PiwigoAPI.login(propertyTable, false)
         if not rv then
             LrErrors.throwUserError('Publish photos to Piwigo - cannot connect to piwigo at ' .. propertyTable.host)
+
             return nil
         end
     end
-
-    log.debug('PublishTask.processRenderedPhotos - publishSettings:\n' .. utils.serialiseVar(propertyTable))
-
-
 
     local publishedCollection = exportContext.publishedCollection
     local albumId = publishedCollection:getRemoteId()
     local albumName = publishedCollection:getName()
     local checkCats
-    local rv
 
     -- Check that collection exists as an album on Piwigo and create if not
     rv, checkCats = PiwigoAPI.pwCategoriesGet(propertyTable, albumId)
     if not rv then
         LrErrors.throwUserError('Publish photos to Piwigo - cannot check category exists on piwigo at ' .. propertyTable.host)
+
         return nil
     end
-
-    log.debug('PublishTask.processRenderedPhotos - checkcats:\n' .. utils.serialiseVar(checkCats))
 
     if utils.nilOrEmpty(checkCats) then
         -- todo - create album on piwigo if missing
@@ -82,11 +73,13 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
             --exportSession:recordRemoteCollectionUrl(callStatus.albumURL))
         else
             LrErrors.throwUserError('Publish photos to Piwigo - cannot create Piwigo album for  ' .. albumName)
+
             return nil
         end
         
         -- this shouldn't happen as piwigo albums are created as part of the LrC create album / create publishedCollectionSet routines
         LrErrors.throwUserError('Publish photos to Piwigo - missing Piwigo album for  ' .. albumName)
+
         return nil
     end
 
@@ -97,11 +90,7 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
         local lrPhoto = rendition.photo
         local remoteId = rendition.publishedPhotoId or ""
 
-        log.debug('PublishTask.processRenderedPhotos - waitForRender - remoteId is :' .. remoteId)
-
         local success, pathOrMessage = rendition:waitForRender()
-
-        log.debug('PublishTask.processRenderedPhotos - rendered:' .. pathOrMessage)
 
         -- Check for cancellation again after photo has been rendered.
         if progressScope:isCanceled() then 
@@ -125,12 +114,8 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
             metaData.Remoteid = remoteId
             -- TODO check if this remoteid still exists on Piwigo
 
-            log.debug('PublishTask.processRenderedPhotos - metaData \n' .. utils.serialiseVar(metaData))
-
             -- do the upload
             callStatus = PiwigoAPI.updateGallery(propertyTable, filePath ,metaData, callStatus)
-
-            log.debug('PublishTask.processRenderedPhotos - callStatus \n' .. utils.serialiseVar(callStatus))
 
             if callStatus.status then
                 rendition:recordPublishedPhotoId(callStatus.remoteid or "")
@@ -146,14 +131,15 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
         end
     end
     progressScope:done()
+
 end
 
 -- ************************************************
 function PublishTask.deletePhotosFromPublishedCollection(publishSettings, arrayOfPhotoIds, deletedCallback, localCollectionId)
 
-    local callStatus ={}
 
-    log.debug('PublishTask.deletePhotosFromPublishedCollection - publishSettings:\n' .. utils.serialiseVar(publishSettings))
+
+    local callStatus ={}
 
 
     local catalog = LrApplication.activeCatalog()
@@ -161,10 +147,10 @@ function PublishTask.deletePhotosFromPublishedCollection(publishSettings, arrayO
 
     -- check connection to piwigo
     if not (publishSettings.Connected) then
-        log.debug("PiwigoAPI.pwCategoriesMove 2 - logging in")
-        local rv = PiwigoAPI.login(publishSettings, false)
+         local rv = PiwigoAPI.login(publishSettings, false)
         if not rv then
             LrErrors.throwUserError('Delete Photos from Collection - cannot connect to piwigo at ' .. publishSettings.url)
+            OperationInProgress = ""
             return nil
         end
     end
@@ -191,17 +177,12 @@ end
 
 -- ************************************************
 function PublishTask.getCommentsFromPublishedCollection(publishSettings, arrayOfPhotoInfo, commentCallback)
-    log.debug('PublishTask.getCommentsFromPublishedCollection')
 
 end
 
 -- ************************************************
 function PublishTask.shouldDeletePublishService( publishSettings, info )
 
-
-    log.debug('PublishTask.shouldDeletePublishService')
-    log.debug('publishSettings\n' .. utils.serialiseVar(publishSettings))
-    log.debug('info\n' .. utils.serialiseVar(info))
 
     -- TODO
     -- Add dialog with details of photos and sub collections that will be orphaned if delete goes ahead
@@ -212,28 +193,22 @@ end
 -- ************************************************
 function PublishTask.addCommentToPublishedPhoto( publishSettings, remotePhotoId, commentText )
 
-    log.debug("PublishTask.addCommentToPublishedPhoto")
 end
 
 -- ************************************************
 function PublishTask.shouldDeletePhotosFromServiceOnDeleteFromCatalog(publishSettings, nPhotos)
-
-    log.debug("PublishTask.shouldDeletePhotosFromServiceOnDeleteFromCatalog")
     return nil -- Show builtin Lightroom dialog.
 
 end
 
 -- ************************************************
 function PublishTask.validatePublishedCollectionName(name)
-
-    log.debug("PublishTask.validatePublishedCollectionName")
     return true, '' -- TODO
 
 end
 
 -- ************************************************
 function PublishTask.getCollectionBehaviorInfo(publishSettings)
-    log.debug("PublishTask.getCollectionBehaviorInfo " .. publishSettings.host)
     return {
         defaultCollectionName = 'default',
         defaultCollectionCanBeDeleted = true,
@@ -246,14 +221,10 @@ end
 -- ************************************************
 function PublishTask.didUpdatePublishService( publishSettings, info )
 
-    log.debug("PublishTask.didUpdatePublishService")
-
 end
 
 -- ************************************************
 function PublishTask.viewForCollectionSettings( f, publishSettings, info )
-
-    log.debug("PublishTask.viewForCollectionSettings")
 
 end
 
@@ -262,15 +233,15 @@ function PublishTask.updateCollectionSettings( publishSettings, info )
     -- this callback is triggered by LrC when a change is made to an existing collectionset or a new one is created
     -- We use it only for the creation of new collections to create a corresponding album on Piwigo
     -- therefore we need to check if the associated piwigo album already exists and do nothing if so
+         -- check if operation is in progress and exit if so
 
-    log.debug("PublishTask.updateCollectionSettings")
-    log.debug('publishSettings\n' .. utils.serialiseVar(publishSettings))
-    log.debug('info\n' .. utils.serialiseVar(info))
-    
+
     local callStatus = {
         status = false,
         statusMsg = ""
     }
+
+
     local parentCat
     local metaData = {}
     local newCollectionName = info.name
@@ -279,10 +250,8 @@ function PublishTask.updateCollectionSettings( publishSettings, info )
     -- check if remoteId is present on this collection and exit if so
     local remoteId = newCollection:getRemoteId()
     if not (utils.nilOrEmpty(remoteId)) then
-        if debug then
-            log.debug("PublishTask.updateCollectionSettings - existing album " .. remoteId)
-        end
         callStatus.status = true
+
         return callStatus
     end
     metaData.name = newCollectionName
@@ -313,8 +282,8 @@ function PublishTask.updateCollectionSettings( publishSettings, info )
             "info"
         )
     end
-    log.debug("PublishTask.updateCollectionSettings - name, parent" .. newCollectionName, parentCat)
-    
+
+    return callStatus
 
 end
 
@@ -322,8 +291,7 @@ end
 -- ************************************************
 function PublishTask.viewForCollectionSetSettings( f, publishSettings, info )
 
-    log.debug("PublishTask.viewForCollectionSetSettings")
-
+  
 end
 -- ************************************************
 function PublishTask.updateCollectionSetSettings( publishSettings, info )
@@ -332,14 +300,11 @@ function PublishTask.updateCollectionSetSettings( publishSettings, info )
     -- We use it only for the creation of new collections to create a corresponding album on Piwigo
     -- therefore we need to check if the associated piwigo album already exists and do nothing if so
 
-    log.debug("PublishTask.updateCollectionSetSettings")
-    log.debug('publishSettings\n' .. utils.serialiseVar(publishSettings))
-    log.debug('info\n' .. utils.serialiseVar(info))
-
     local callStatus = {
         status = false,
         statusMsg = ""
     }
+
 
     local parentCat
     local metaData = {}
@@ -349,13 +314,9 @@ function PublishTask.updateCollectionSetSettings( publishSettings, info )
     -- check if remoteId is present on this collection and exit if so
     local remoteId = newCollection:getRemoteId()
     if not (utils.nilOrEmpty(remoteId)) then
-
-        log.debug("PublishTask.updateCollectionSetSettings - existing album " .. remoteId)
-
         callStatus.status = true
         return callStatus
     end
-
 
     metaData.name = newCollectionName
     metaData.type = "collectionset"
@@ -385,7 +346,7 @@ function PublishTask.updateCollectionSetSettings( publishSettings, info )
             "info"
         )
     end
-    log.debug("PublishTask.updateCollectionSettings - name, parent" .. newCollectionName, parentCat)
+
     return callStatus
 end
 
@@ -398,17 +359,10 @@ function PublishTask.reparentPublishedCollection( publishSettings, info )
     local allParents= info.parents
     local myCat = info.remoteId
     local parentCat
-
-    log.debug("PublishTask.reparentPublishedCollection")
-    log.debug('publishSettings\n' .. utils.serialiseVar(publishSettings))
-    log.debug('info\n' .. utils.serialiseVar(info))
-    log.debug('allParents\n' .. utils.serialiseVar(allParents))
-
     -- which collection is being moved and to where
     if utils.nilOrEmpty(allParents) then
         parentCat = 0 -- move to root
     else
-        log.debug('allParents\n' .. utils.serialiseVar(allParents))
         parentCat = allParents[#allParents].remoteCollectionId
     end
     LrTasks.startAsyncTask(function()
@@ -431,26 +385,19 @@ function PublishTask.renamePublishedCollection(publishSettings, info)
     callStatus.status = false
     -- called for both collections and collectionsets
 
-    log.debug("PublishTask.renamePublishedCollection")
-    log.debug('publishSettings\n' .. utils.serialiseVar(publishSettings))
-    log.debug('info\n' .. utils.serialiseVar(info))
-
     local remoteId = info.remoteId
     local newName = info.name
     local collection = info.publishedCollection
     local oldName = collection:getName()
-
-
-    log.debug("PublishTask.renamePublishedCollection - change name of remoteId " .. (remoteId or "") .. " from " .. oldName .. " to " .. newName)
 
     if utils.nilOrEmpty(remoteId) then
         callStatus.statusDesc = "no album found on Piwigo"
     else
         callStatus = PiwigoAPI.pwCategoriesSetinfo(publishSettings,info, callStatus)
     end
+
     if not(callStatus.status) then
-        log.debug("PublishTask.renamePublishedCollection - reverting name back to " .. oldName .. " from " .. newName)
-        LrTasks.startAsyncTask(function()
+         LrTasks.startAsyncTask(function()
             LrFunctionContext.callWithContext("revertRename", function(context)
                 local cat = LrApplication.activeCatalog()
                 cat:withWriteAccessDo("Revert failed rename", function()
@@ -470,10 +417,6 @@ end
 -- ************************************************
 function PublishTask.willDeletePublishService( publishSettings, info )
 
-    log.debug('PublishTask.willDeletePublishService')
-    log.debug('publishSettings\n' .. utils.serialiseVar(publishSettings))
-    log.debug('info\n' .. utils.serialiseVar(info))
-
 end
 
 -- ************************************************
@@ -483,10 +426,6 @@ function PublishTask.deletePublishedCollection(publishSettings, info)
     local callStatus = {}
     callStatus.status = false
     -- called for both collections and collectionsets
-
-    log.debug('PublishTask.deletePublishedCollection')
-    log.debug('publishSettings\n' .. utils.serialiseVar(publishSettings))
-    log.debug('info\n' .. utils.serialiseVar(info))
 
     -- if there are images in album what should happen? 
     -- Piwigo will create orphans if the album is just deleted

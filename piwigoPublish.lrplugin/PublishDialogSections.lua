@@ -31,9 +31,6 @@ PublishDialogSections = {}
 -- *************************************************
 function PublishDialogSections.startDialog(propertyTable)
 
-  	log.debug('PublishDialogSections.startDialog')
-
-	-- log.debug('propertyTable contents: ' .. utils.serialiseVar(propertyTable))
 	propertyTable:addObserver('host', PiwigoAPI.ConnectionChange)
 	propertyTable:addObserver('userName', PiwigoAPI.ConnectionChange)
 	propertyTable:addObserver('userPW', PiwigoAPI.ConnectionChange)
@@ -57,9 +54,7 @@ end
 
 -- *************************************************
 function PublishDialogSections.endDialog(propertyTable, why)
-  	log.debug('PublishDialogSections.endDialog - ' .. why)
-	-- 
-
+  
 end
 
 -- *************************************************
@@ -95,7 +90,7 @@ return {
 			},
 			f:row {
 				f:static_text {
-					title = "Plugin Version 0.9.4",
+					title = "Plugin Version 20251117.3",
 					alignment = 'left',
 					width = share 'labelWidth',
 				},
@@ -119,7 +114,7 @@ return {
                 fill_horizontal = 1,
 
                 validate = function(v, host)
-                    local sanitizedURL = pwInstance:sanityCheckAndFixURL(host)
+                    local sanitizedURL = PiwigoAPI.sanityCheckAndFixURL(host)
                     if sanitizedURL == host then
                         return true, host, ''
                     elseif sanitizedURL ~= nil then
@@ -234,49 +229,11 @@ local function prefsDialog (f, propertyTable)
 				fill_horizontal = 1,
 			},
 		},
-	--[[
-		f:spacer { height = 5 },
-		f:row {
-        	f:static_text {
-				title = "Include Publish Collections for Sets:",
-				alignment = 'right',
-				width = share 'labelWidth',
-				tooltip = "Create special collections to allow images to be published to albums with sub-albums on Piwigo"
-        	},
-        	f:checkbox {
-				value = bind 'createCollectionsForSets',
-				title = '',
-				alignment = 'left',
-				tooltip = "Create special collections to allow images to be published to albums with sub-albums on Piwigo"
-        	},
-   		},
-	
-		f:spacer { height = 10 },
-		f:row {
-			f:static_text {
-				title = "Root Keyword Tag for Published Photos:",
-				alignment = 'left',
-				width = share 'labelWidth',
-				tooltip = "If set, keywords for Piwigo Host and Album Name will be added to published photos under this root. Use | to delimit a hierarchy"
-			},	
-			f:edit_field {
-				value = bind 'tagRoot',
-				width_in_chars = 30,
-				truncation = 'middle',
-				immediate = true,
-				fill_horizontal = 1,
-				tooltip = "If set, keywords for Piwigo Host and Album Name will be added to published photos under this root. Use | to delimit a hierarchy"
-			},	
-		},
-		]]
 	}
 end
 --
 -- *************************************************
 function PublishDialogSections.sectionsForTopOfDialog(f, propertyTable )
-
-  	log.debug('PublishDialogSections.sectionsForTopOfDialog')
-
 
 	local conDlg = connectionDialog(f, propertyTable)
 	local prefDlg = prefsDialog(f, propertyTable)
@@ -285,22 +242,7 @@ function PublishDialogSections.sectionsForTopOfDialog(f, propertyTable )
 		propertyTable.ConCheck = true
 		propertyTable.ConStatus = "Not Connected"	
 	else
-		--[[
-		LrTasks.startAsyncTask(function()
-			if PiwigoAPI.login(propertyTable,false) then
-				propertyTable.Connected = true
-				propertyTable.ConCheck = false
-				propertyTable.ConStatus = "Connected to Piwigo Gallery at " .. propertyTable.host
-				log.debug('Token is ' .. propertyTable.token)
 
-			else
-				LrDialogs.message('Connection NOT successful')
-				propertyTable.Connected = false
-				propertyTable.ConCheck = true
-				propertyTable.ConStatus = "Not Connected"
-			end
-		end)
-		]]
 	end
 
 	return { conDlg , prefDlg }
@@ -326,8 +268,6 @@ end
 
 -- *************************************************
 function PublishDialogSections.sectionsForBottomOfDialog(f, propertyTable)
-
-	log.debug('PublishDialogSections.sectionsForBottomOfDialog')
 	
 	return {}
 
