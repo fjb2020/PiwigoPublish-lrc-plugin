@@ -38,16 +38,27 @@ function PiwigoAPI.ConnectionChange(propertyTable)
 	propertyTable.token = ""
 end
 
+-- *************************************************
+function PiwigoAPI.getPublishServicesForPlugin(pluginID)
+-- Helper to get all publish service connections for this plugin
+    local catalog = LrApplication.activeCatalog()
+    local services = catalog:getPublishServices() or {}
+    local myServices = {}
+
+    for _, s in ipairs(services) do
+        if s:getPluginId() == pluginID then
+            table.insert(myServices, s)
+        end
+    end
+
+    return myServices
+end
+
 
 -- *************************************************
 function PiwigoAPI.getPublishService(propertyTable)
     -- get reference to publish service matching host and userName in propertyTable
     local catalog = LrApplication.activeCatalog()
-
-
---  LrTasks.startAsyncTask(function() -- commented out as the function is already called within a task
-
-    -- Find the matching service by comparing exportPresetFields
     local services = catalog:getPublishServices()
     local thisService
     local foundService = false
@@ -65,9 +76,6 @@ function PiwigoAPI.getPublishService(propertyTable)
             break
         end
     end
-
---  end) -- commented out as the function is already called within a task
-
     propertyTable._service = thisService  -- store a reference for button callbacks
 	return foundService
     
@@ -989,20 +997,6 @@ function PiwigoAPI.deletePhoto(propertyTable, pwCatID, pwImageID, callStatus)
         { name = "image_id", value = tostring(pwImageID) },
         { name = "pwg_token", value = propertyTable.token}
     }
-
-    --[[
-    local urlParams = {
-        method = "pwg.images.delete",
-        image_id = tostring(pwImageID) ,
-        pwg_token = propertyTable.token,
-        format = "json"
-    }
-    local body = utils.buildPost(urlParams)
-    local headers = {
-        { field = "Content-Type", value = "application/x-www-form-urlencoded" },
-        { field = "Cookie", value = propertyTable.SessionCookie }
-    }
-]]
   
     log.debug("PiwigoAPI.deletePhoto - propertyTable \n " .. utils.serialiseVar(propertyTable))
     log.debug("PiwigoAPI.deletePhoto - params \n" .. utils.serialiseVar(params))
@@ -1019,7 +1013,6 @@ function PiwigoAPI.deletePhoto(propertyTable, pwCatID, pwImageID, callStatus)
     log.debug("PiwigoAPI.deletePhoto - httpResponse \n" .. utils.serialiseVar(httpResponse))
     log.debug("PiwigoAPI.deletePhoto - httpHeaders \n" .. utils.serialiseVar(httpHeaders))
  
-
     local body
     if httpResponse then 
         body = JSON:decode(httpResponse)
@@ -1055,19 +1048,42 @@ function PiwigoAPI.setAlbumCover(propertyTable)
     log.debug("PiwigoAPI.setAlbumCover")
     log.debug("propertyTable\n" .. utils.serialiseVar(propertyTable))
     local catalog = LrApplication.activeCatalog()
-    local selPhotos =  catalog:getMultipleSelectedOrAllPhotos()
+    local selPhotos =  catalog:getTargetPhotos()
     if utils.nilOrEmpty(selPhotos) then
         LrDialogs.message("Please select a photo to set as album cover","","warning")
         return false
     end
     if #selPhotos > 1 then
-        LrDialogs.message("Please select a single photo to set as album cover","","warning")
+        LrDialogs.message("Please select a single photo to set as album cover (" .. #selPhotos .. " currently selected)","","warning")
         return false
     end
-    local Photo = selPhotos[1]
--- we now have a single photo.
 
+-- we now have a single photo.
+    local Photo = selPhotos[1]
+    log.debug("Selected photo is " .. Photo:getFormattedMetadata("fileName"))
 -- need to find which collection is active to find correct Piwigo album and if it has been published
+    local publishService = propertyTable.publishService  -- LrPublishConnection
+    local collection = propertyTable.collection          -- LrPublishedCollection being edited
+
+    log.debug("Publishservice is\n" .. utils.serialiseVar(publishService))
+    log.debug("Collection is\n" ..  utils.serialiseVar(collection))
+
+--[[
+    if source:className() == "LrPublishedCollection" then
+            -- It's a published collection (LrPublishedCollection)
+        local publishedCollection = source
+        local service = publishedCollection:getService()
+        
+        if service:getName() == "Your Service Name" then
+            -- This collection belongs to *your* publish service
+            LrDialogs.message("Selected published collection: " .. publishedCollection:getName())
+        else
+            LrDialogs.message("Selected published collection belongs to a different service: " .. service:getName())
+        end
+    else
+        LrDialogs.message("Not a published collection; it's a " .. source:className())
+    end
+    ]]
 
 
 -- check if photo exists in this piwigo album

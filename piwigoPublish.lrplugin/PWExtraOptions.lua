@@ -23,89 +23,93 @@
 -- *************************************************
 local function main()
 
-
      LrFunctionContext.callWithContext("PWExtraOptionsContext", function(context)
-            -- Create a property table inside the context
-            
-            log:info("PWExtraOptions - icons is at " .. _PLUGIN.path .. '/icons/icon.png')
-
-            local props = LrBinding.makePropertyTable(context)
-            local bind = LrView.bind
-            props.createCollectionsForSets = false
-            props.tagRoot = "Piwigo"
+        -- Create a property table inside the context
+        
+        log.debug("PWExtraOptions - icons is at " .. _PLUGIN.path .. '/icons/icon.png')
 
 
-            local f = LrView.osFactory()
-            local c = f:column {
-                spacing = f:dialog_spacing(),
+        local allServices = PiwigoAPI.getPublishServicesForPlugin(_PLUGIN.id)
+        if #allServices == 0 then
+            LrDialogs.message("No Piwigo publish services found.")
+            return
+        end
 
-                f:row {
-                    spacing = 10,
-                    f:picture {
-                        file = _PLUGIN.path .. '/icons/icon.png',
-                        width = 48, height = 48,
-                        alignment = 'left',
-                        tooltip = "Piwigo Logo",
-                    },
-                    f:static_text {
-                        title = "Piwigo Extra Options",
-                        alignment = 'left',
-                        fill_horizontal = 1,
-                    },
+        local props = LrBinding.makePropertyTable(context)
+        local bind = LrView.bind
+        -- Property table for UI bindings
+        local props = bind {
+            selectedServiceIndex = 1, -- default to first service
+        }
+        local serviceNames = {}
+        for _, s in ipairs(allServices) do
+            table.insert(serviceNames, s:getName())
+        end
+
+        local f = LrView.osFactory()
+        local c = f:column {
+            spacing = f:dialog_spacing(),
+            f:row {
+            -- TOP: icon + version block
+                f:picture {
+                    alignment = 'left',
+                    value = iconPath,
+                    -- value = _PLUGIN:resourceId("icons/piwigoPublish_9_5.png"),
+                },
+            },
+
+            f:row {
+                spacing = f:label_spacing(),
+
+                f:static_text {
+                    title = "Select publish service:",
+                    alignment = 'right',
+                    width = 150,
                 },
 
-                f:separator { fill_horizontal = 1 },
-
-                f:row {
-                    f:checkbox {
-                        title = "Create Publish Collections for Sets",
-                        value = bind 'createCollectionsForSets',
-                        tooltip = "When enabled, Piwigo album sets will become publish collections in Lightroom.",
-                    },
+                f:popup_menu {
+                    value = bind 'selectedServiceIndex',
+                    items = serviceNames,
+                    width = 300,
                 },
+            },
 
-                f:row {
-                    f:static_text {
-                        title = "Root Keyword Tag for Published Photos:",
-                        width = 200,
-                        alignment = 'right',
-                    },
-                    f:edit_field {
-                        value = bind 'tagRoot',
-                        width_in_chars = 30,
-                        immediate = true,
-                        tooltip = "The top-level keyword tag for photos published to Piwigo.",
-                    },
+
+
+            f:spacer { height = 20 },
+            f:row {
+                f:static_text {
+                    title = "Applies to selected images",
+                    font = "<system/bold>",
+                    alignment = 'left',
+                    fill_horizontal = 1,
                 },
-
-                f:spacer { height = 10 },
-
-                f:row {
-                    spacing = 10,
-                    f:push_button {
-                        title = "Apply",
-                        action = function()
-                            LrDialogs.message(
-                                "Settings applied",
-                                "Checkbox: " .. tostring(props.createCollectionsForSets) ..
-                                "\nRoot tag: " .. tostring(props.tagRoot)
-                            )
-                        end,
-                    },
-                    f:push_button {
-                        title = "Close",
-                        action = function()
-                            dialog:close()
-                        end,
-                    },
+            },
+            f:spacer { height = 1 },
+            f:row {
+                f:push_button {
+                    title = 'Set Piwigo Album Cover',
+                    tooltip = "Sets selected image as Piwigo album cover ",
+                    action = function(button)
+                        LrTasks.startAsyncTask(function()
+                            PiwigoAPI.setAlbumCover(propertyTable)
+                        end)
+                    end,
                 },
-            }
+                f:static_text {
+                    title = "Sets selected image as Piwigo album cover for this collection",
+                    alignment = 'left',
+                    -- width = share 'labelWidth',
+                    width_in_chars = 50,
+                },
+            },
+        }
 
-            dialog = LrDialogs.presentModalDialog({
-                title = "Piwigo Extra Options",
-                contents = c,
-                actionVerb = "Close",
-            })
+        dialog = LrDialogs.presentModalDialog({
+            title = "Piwigo Extra Options",
+            contents = c,
+            actionVerb = "Close",
+        })
     end)
 end
 

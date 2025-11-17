@@ -32,7 +32,7 @@ return {
 		file = "PublishServiceProvider.lua",
 	},
 
-    --[[
+    
     LrLibraryMenuItems = {
         -- Menu items for Library -> Plug In Extras -> FJB Universal Plugin
         {
@@ -40,6 +40,6 @@ return {
             file = "PWExtraOptions.lua",
         },
     },
-]]
-    VERSION = { major=0, minor=9, revision=5 },
+    
+    VERSION = { major=1, minor=5, revision=0 },
 }

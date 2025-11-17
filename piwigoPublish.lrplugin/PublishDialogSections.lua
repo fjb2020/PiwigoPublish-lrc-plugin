@@ -24,10 +24,6 @@
 
 PublishDialogSections = {}
 
-
-
-
-
 -- *************************************************
 function PublishDialogSections.startDialog(propertyTable)
 
@@ -39,8 +35,8 @@ function PublishDialogSections.startDialog(propertyTable)
 	propertyTable:addObserver('userPW', PiwigoAPI.ConnectionChange)
 	propertyTable:addObserver('tagRoot', PiwigoAPI.ConnectionChange)
 
+--[[
 	local doInit = false
-
 	if (utils.nilOrEmpty(propertyTable.Connected)) then
 		doInit = true
 	else
@@ -51,6 +47,16 @@ function PublishDialogSections.startDialog(propertyTable)
 	if doInit then
 		PiwigoAPI.ConnectionChange(propertyTable)
 	end
+]]
+	if propertyTable.host and propertyTable.userName and propertyTable.userPW then
+		-- try to login 
+		LrTasks.startAsyncTask(function()
+			if not PiwigoAPI.login(propertyTable) then
+				-- LrDialogs.message('Connection NOT successful')
+			end
+		end)
+	end
+	
 
 
 end
@@ -74,8 +80,8 @@ return {
 		-- TOP: icon + version block
             f:picture {
 				alignment = 'left',
-                --value = _PLUGIN:resourceId("icons/icon_med.png"),
-				value = _PLUGIN:resourceId("icons/piwigoPublish_9_4.png"),
+                value = iconPath,
+				--value = _PLUGIN:resourceId("icons/piwigoPublish_9_5.png"),
             },
 		},
 		-- PW Host
@@ -274,35 +280,7 @@ local function prefsDialog (f, propertyTable)
 			},
 		},
 
-		f:spacer { height = 20 },
-		f:row {
-			f:static_text {
-				title = "Applies to selected images",
-				font = "<system/bold>",
-				alignment = 'left',
-				fill_horizontal = 1,
-			},
-		},
-		f:spacer { height = 1 },
-		f:row {
-			f:push_button {
-				title = 'Set Piwigo Album Cover',
-				width = share 'buttonwidth',
-				enabled = bind('Connected', propertyTable),
-				tooltip = "Sets selected image as Piwigo album cover ",
-				action = function(button)
-					LrTasks.startAsyncTask(function()
-						PiwigoAPI.setAlbumCover(propertyTable)
-					end)
-				end,
-			},
-			f:static_text {
-				title = "Sets selected image as Piwigo album cover for this collection",
-				alignment = 'left',
-            	-- width = share 'labelWidth',
-				width_in_chars = 50,
-			},
-		},
+
 
 		
 	}

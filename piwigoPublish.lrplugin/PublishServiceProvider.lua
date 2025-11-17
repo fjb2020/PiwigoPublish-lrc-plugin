@@ -32,7 +32,9 @@ return {
 	sectionsForTopOfDialog = PublishDialogSections.sectionsForTopOfDialog,
 	sectionsForBottomOfDialog = PublishDialogSections.sectionsForBottomOfDialog,
 	endDialog = PublishDialogSections.endDialog,
-	hideSections = { 'exportLocation' },
+
+	hideSections = { 'exportLocation' }, 
+	
 
 -- Behavious Settings
 	allowFileFormats = nil,
