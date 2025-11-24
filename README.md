@@ -11,7 +11,7 @@ Currently at beta 0.9.4 version
     * Images are not downloaded from Piwigo as part of this, nor are existing images in LrC automatically added to the newly created Published Collections.
 * Images added to LrC Publish Service are published to corresponding album on Piwigo.
 * Changes to images to trigger a re-publish will overwrite the previously published Piwigo image.
-* Images removed from LrC Publish Service are removed from correspoinding album on Piwigo
+* Images removed from LrC Publish Service are removed from corresponding album on Piwigo
 * Moving a Published Collection under a different Published Collection Set is reflected in the associated Piwigo albums
 * Adding new Published Collections will create a corresponding album on Piwigo, respecting the album structure
 * When a Published Collection name is changed in LrC the associated Piwigo album is also renamed
@@ -33,6 +33,7 @@ The plugin does not currently support concurrent operations - so please do not a
 ## The following functionality is planned:
 * Import collection/set/image structure from another publish service
     * if remoteIds / URLs are present these will be copied. Useful to copy another publish service where a Piwigo host is the target without having to clear the existing Piwigo albums prior to re-publishing.
+* Keyword Rules - customisation of how LrC keywords are exported to Piwigo
 * Support for Piwigo API Keys when released - due in Piwigo 16.0.0 (currently 16.0.0RC1) - https://piwigo.org/forum/viewtopic.php?id=34376
 * Localisation
 

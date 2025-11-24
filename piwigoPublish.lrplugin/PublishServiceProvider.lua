@@ -32,7 +32,9 @@ return {
 	sectionsForTopOfDialog = PublishDialogSections.sectionsForTopOfDialog,
 	sectionsForBottomOfDialog = PublishDialogSections.sectionsForBottomOfDialog,
 	endDialog = PublishDialogSections.endDialog,
-	hideSections = { 'exportLocation' },
+
+	hideSections = { 'exportLocation' }, 
+	
 
 -- Behavious Settings
 	allowFileFormats = nil,
@@ -48,7 +50,6 @@ return {
 		{ key = 'host', default = '' },
 		{ key = "userName", default = '' },
 		{ key = "userPW", default = '' },
-		-- { key = "tagRoot", default = "~Metadata|Publishing|Piwigo" },
 	},
 
 	-- metadataThatTriggersRepublish = {},

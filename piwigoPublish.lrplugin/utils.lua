@@ -186,7 +186,7 @@ end
 -- *************************************************
 function utils.handleError(logMsg, userErrorMsg)
     -- function to log errors and throw user errors
-    log:error(logMsg)
+    log.error(logMsg)
     LrDialogs.showError(userErrorMsg)
 end
 

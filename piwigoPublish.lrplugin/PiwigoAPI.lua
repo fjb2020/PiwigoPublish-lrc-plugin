@@ -38,16 +38,27 @@ function PiwigoAPI.ConnectionChange(propertyTable)
 	propertyTable.token = ""
 end
 
+-- *************************************************
+function PiwigoAPI.getPublishServicesForPlugin(pluginID)
+-- Helper to get all publish service connections for this plugin
+    local catalog = LrApplication.activeCatalog()
+    local services = catalog:getPublishServices() or {}
+    local myServices = {}
+
+    for _, s in ipairs(services) do
+        if s:getPluginId() == pluginID then
+            table.insert(myServices, s)
+        end
+    end
+
+    return myServices
+end
+
 
 -- *************************************************
 function PiwigoAPI.getPublishService(propertyTable)
     -- get reference to publish service matching host and userName in propertyTable
     local catalog = LrApplication.activeCatalog()
-
-
---  LrTasks.startAsyncTask(function() -- commented out as the function is already called within a task
-
-    -- Find the matching service by comparing exportPresetFields
     local services = catalog:getPublishServices()
     local thisService
     local foundService = false
@@ -65,9 +76,6 @@ function PiwigoAPI.getPublishService(propertyTable)
             break
         end
     end
-
---  end) -- commented out as the function is already called within a task
-
     propertyTable._service = thisService  -- store a reference for button callbacks
 	return foundService
     
@@ -75,13 +83,14 @@ end
 
 -- *************************************************
 function PiwigoAPI.sanityCheckAndFixURL(url)
-    --[[
+    
     if utils.nilOrEmpty(url) then
         utils.handleError('sanityCheckAndFixURL: URL is empty', "Error: Piwigo server URL is empty.")
         return false
     end
 
-    local sanitizedURL = string.match(url, "^https?://[%w%.%-]+[:%d]*")
+    --local sanitizedURL = string.match(url, "^https?://[%w%.%-]+[:%d]*")
+    local sanitizedURL = url:gsub("/$", "")
     if sanitizedURL then
         if string.len(sanitizedURL) == string.len(url) then
             log.debug('sanityCheckAndFixURL: URL is completely sane.')
@@ -95,7 +104,7 @@ function PiwigoAPI.sanityCheckAndFixURL(url)
     else
         utils.handleError('sanityCheckAndFixURL: Unknown error in URL')
     end
-]]
+
     return url
 end
 
@@ -106,8 +115,10 @@ function PiwigoAPI.login(propertyTable)
         return false
     end
 
-    return PiwigoAPI.pwConnect(propertyTable)
+    -- testing
 
+    local rv =  PiwigoAPI.pwConnect(propertyTable)
+    return rv
 end
 
 -- *************************************************
@@ -314,7 +325,7 @@ local function createCollection(propertyTable, node, parentNode, isLeafNode, sta
 
     -- getPublishService to get reference to this publish service - returned in propertyTable._service
     -- needs to be refreshed each time  to relfect lastest state of publishedCollections created further below
-    rv = PiwigoAPI.getPublishService(propertyTable, false)
+    rv = PiwigoAPI.getPublishService(propertyTable)
     if not rv then
         LrErrors.throwUserError("Error in createCollection: Cannot find Piwigo publish service for host/user.")
         return false
@@ -421,7 +432,7 @@ function PiwigoAPI.importAlbums(propertyTable)
         rv = PiwigoAPI.login(propertyTable)
         if not rv then
             utils.handleError('PiwigoAPI:importAlbums - cannot connect to piwigo', "Error: Cannot connect to Piwigo server.")
-            return false   
+            return
         end
     end
 
@@ -430,26 +441,24 @@ function PiwigoAPI.importAlbums(propertyTable)
     rv, allCats  = PiwigoAPI.pwCategoriesGet(propertyTable, "")
     if not rv then
         utils.handleError('PiwigoAPI:importAlbums - cannot get categories from piwigo', "Error: Cannot get categories from Piwigo server.")
-        return false   
+        return
     end
     if utils.nilOrEmpty(allCats) then
         utils.handleError('PiwigoAPI:importAlbums - no categories found in piwigo', "Error: No categories found in Piwigo server.")
-        return false   
+        return
     end     
 
     -- getPublishService to get reference to this publish service - returned in propertyTable._service
     rv = PiwigoAPI.getPublishService(propertyTable, false)
     if not rv then
         utils.handleError('PiwigoAPI:importAlbums - cannot find publish service for host/user', "Error: Cannot find Piwigo publish service for host/user.")
-        return false
+        return
     end
     local publishService = propertyTable._service
     if not publishService then
         utils.handleError('PiwigoAPI:importAlbums - publish service is nil', "Error: Piwigo publish service is nil.")
-        return false
+        return
     end
-
-    -- this routine creates collections for all piwigo albums
 
     -- hierarchical table of categories
     local catHierarchy = buildCatHierarchy(allCats)
@@ -462,11 +471,22 @@ function PiwigoAPI.importAlbums(propertyTable)
         collections = 0,
         errors = 0
     }
+    local progressScope = LrProgressScope {
+        title = "Import album structure...",
+        caption = "Starting...",
+        functionContext = context,
+    }
     for cc, thisNode in pairs(catHierarchy) do
-          traverseChildren(thisNode, "", propertyTable, statusData)
+        if progressScope:isCanceled() then 
+            break
+        end
+        progressScope:setPortionComplete(cc, #catHierarchy)
+        progressScope:setCaption("Processing " .. cc .. " of " .. #catHierarchy .. " top level albums")
+        traverseChildren(thisNode, "", propertyTable, statusData)
     end
+    progressScope:done()
     LrDialogs.message("Import Piwigo Albums", string.format("%s collections, %s collection sets, %s existing, %s errors",statusData.collections,statusData.collectionSets,statusData.existing,statusData.errors ))
-    return true
+    return
 end
 
 -- *************************************************
@@ -475,6 +495,7 @@ function PiwigoAPI.pwCategoriesGet(propertyTable, thisCat)
     -- get list of categories from Piwigo
     -- if thisCat is set then return this category and children, otherwise all categories
     local status, statusDes
+
 
     local urlParams = {
         { name = "method", value = "pwg.categories.getList"},
@@ -495,9 +516,6 @@ function PiwigoAPI.pwCategoriesGet(propertyTable, thisCat)
 
     if httpHeaders.status == 200 then
         -- got response from Piwigo
-
-        local cookies = {}
-        SessionCookie = ""
         local rtnBody = JSON:decode(httpResponse)
         if rtnBody.stat == "ok" then
             local allCats = rtnBody.result.categories
@@ -738,11 +756,7 @@ function PiwigoAPI.pwCategoriesDelete( propertyTable, info, metaData, callStatus
         callStatus.status = false
         callStatus.statusMsg = parseResp.message or ""
     end
-
     return callStatus
-
-
-
 end
 
 -- *************************************************
@@ -807,8 +821,62 @@ function PiwigoAPI.pwCategoriesSetinfo(propertyTable, info, callStatus)
 end
 
 -- *************************************************
+function PiwigoAPI.checkPhoto(propertyTable, pwImageID)
+    -- check if image with this id exists on Piwigo
+    -- pwg.images.getInfo
+    local rtnStatus = {}
+    rtnStatus.status = false
+
+    local status, statusDes
+    local urlParams = {
+        { name = "method", value = "pwg.images.getInfo"},
+        { name = "image_id", value = pwImageID}
+    }
+
+    -- build headers to include cookies from pwConnect call
+    local headers = { ["Cookie"] = propertyTable.cookieHeader }
+
+    local getUrl = utils.buildGet(propertyTable.pwurl, urlParams)
+
+    log.debug("PiwigoAPI.checkPhoto - calling " .. getUrl)
+    log.debug("PiwigoAPI.checkPhoto - headers are " .. utils.serialiseVar(headers))
+
+    local httpResponse, httpHeaders = LrHttp.get(getUrl,headers)
+
+    log.debug("PiwigoAPI.checkPhoto - httpHeaders\n" .. utils.serialiseVar(httpheaders))
+    log.debug("PiwigoAPI.checkPhoto - httpResponse\n" .. utils.serialiseVar(httpResponse))
+
+    if httpHeaders.status == 200 then
+        -- got response from Piwigo
+        local rtnBody = JSON:decode(httpResponse)
+        if rtnBody.status == "ok" then
+            local imageDets = rtnBody.result
+            rtnStatus.status = true
+            rtnStatus.httpStatus = rtnBody.status
+            rtnStatus.httpStatusDes = ""
+            rtnStatus.imageDets = imageDets
+        else
+            rtnStatus.httpStatus = rtnBody.err
+            rtnStatus.httpStatusDes = rtnBody.message
+        end
+    else
+        if httpHeaders.error then
+            statusDes = httpHeaders.error.name
+            status = httpHeaders.error.errorCode
+        else
+            statusDes = httpHeaders.statusDes
+            status = httpHeaders.status
+        end
+        rtnStatus.httpStatusDes = statusDes
+        rtnStatus.httpStatus = status
+    end
+    return rtnStatus
+end
+
+-- *************************************************
 function PiwigoAPI.updateGallery(propertyTable, exportFilename, metaData, callStatus)
     -- update gallery with image via pwg.images.addSimple
+
 
     callStatus.status = false
 
@@ -820,10 +888,11 @@ function PiwigoAPI.updateGallery(propertyTable, exportFilename, metaData, callSt
         { name  = "comment", value = metaData.Caption}
     }
     if metaData.Remoteid ~= "" then
-        -- TODO - check if remote image exists - don't set this parameter if not
-        
-
-        table.insert(params, { name = "image_id", value = tostring(metaData.Remoteid)})
+        -- check if remote photo exists and ignore parameter if not
+        local rtnStatus = PiwigoAPI.checkPhoto(propertyTable, metaData.Remoteid)
+        if rtnStatus.status then
+            table.insert(params, { name = "image_id", value = tostring(metaData.Remoteid)})
+        end
     end
 
     table.insert(params, {
@@ -883,10 +952,12 @@ function PiwigoAPI.updateGallery(propertyTable, exportFilename, metaData, callSt
             status = httpHeaders.status
         end
         LrDialogs.message("Cannot upload - " .. metaData.fileName .. " to Piwigo - " .. status, statusDes)
-        return callStatus
     end
+
     return callStatus
 end
+
+
 
 -- *************************************************
 function PiwigoAPI.deletePhoto(propertyTable, pwCatID, pwImageID, callStatus)
@@ -899,14 +970,22 @@ function PiwigoAPI.deletePhoto(propertyTable, pwCatID, pwImageID, callStatus)
         { name = "image_id", value = tostring(pwImageID) },
         { name = "pwg_token", value = propertyTable.token}
     }
+  
+    log.debug("PiwigoAPI.deletePhoto - propertyTable \n " .. utils.serialiseVar(propertyTable))
+    log.debug("PiwigoAPI.deletePhoto - params \n" .. utils.serialiseVar(params))
+        --log.debug("PiwigoAPI.deletePhoto - headrs \n" .. utils.serialiseVar(headers))
+
     local httpResponse, httpHeaders = LrHttp.postMultipart(
         propertyTable.pwurl, 
         params,
         {
             headers = { field = "Cookie", value = propertyTable.cookies } 
         }
-    ) 
+    )
 
+    log.debug("PiwigoAPI.deletePhoto - httpResponse \n" .. utils.serialiseVar(httpResponse))
+    log.debug("PiwigoAPI.deletePhoto - httpHeaders \n" .. utils.serialiseVar(httpHeaders))
+ 
     local body
     if httpResponse then 
         body = JSON:decode(httpResponse)
@@ -925,6 +1004,92 @@ function PiwigoAPI.deletePhoto(propertyTable, pwCatID, pwImageID, callStatus)
         callStatus.statusMsg = body.message or ""
     end
     return callStatus
+end
+
+
+
+-- *************************************************
+function PiwigoAPI.associateImages(propertyTable)
+end
+
+-- *************************************************
+function PiwigoAPI.specialCollections(propertyTable)
+end
+
+-- *************************************************
+function PiwigoAPI.setAlbumCover(propertyTable)
+    log.debug("PiwigoAPI.setAlbumCover")
+    log.debug("propertyTable\n" .. utils.serialiseVar(propertyTable))
+    local catalog = LrApplication.activeCatalog()
+    local selPhotos =  catalog:getTargetPhotos()
+    if utils.nilOrEmpty(selPhotos) then
+        LrDialogs.message("Please select a photo to set as album cover","","warning")
+        return false
+    end
+    if #selPhotos > 1 then
+        LrDialogs.message("Please select a single photo to set as album cover (" .. #selPhotos .. " currently selected)","","warning")
+        return false
+    end
+
+-- we now have a single photo.
+    local Photo = selPhotos[1]
+    log.debug("Selected photo is " .. Photo:getFormattedMetadata("fileName"))
+-- need to find which collection is active to find correct Piwigo album and if it has been published
+    local publishService = propertyTable.publishService  -- LrPublishConnection
+    local collection = propertyTable.collection          -- LrPublishedCollection being edited
+
+    log.debug("Publishservice is\n" .. utils.serialiseVar(publishService))
+    log.debug("Collection is\n" ..  utils.serialiseVar(collection))
+
+--[[
+    if source:className() == "LrPublishedCollection" then
+            -- It's a published collection (LrPublishedCollection)
+        local publishedCollection = source
+        local service = publishedCollection:getService()
+        
+        if service:getName() == "Your Service Name" then
+            -- This collection belongs to *your* publish service
+            LrDialogs.message("Selected published collection: " .. publishedCollection:getName())
+        else
+            LrDialogs.message("Selected published collection belongs to a different service: " .. service:getName())
+        end
+    else
+        LrDialogs.message("Not a published collection; it's a " .. source:className())
+    end
+    ]]
+
+
+-- check if photo exists in this piwigo album
+
+-- set as the representative photo for an album. 
+-- the Piwigo web service doesn't require that the photo belongs to the album but this function does  
+
+-- use pwg.categories.setRepresentative, POST only, Admin only 
+
+
+end
+
+-- *************************************************
+local function httpPost(propertyTable, params)
+-- generic function to call LrHttp.Post
+    -- LrHttp.post( url, postBody, headers, method, timeout, totalSize )
+
+    -- convert table of name, value pairs to a urlencoded string
+    local body = utils.buildBodyFromParams(params)
+
+end
+
+-- *************************************************
+local function httpPostMultiPart()
+-- generic function to call LrHttp.PostMultiPart 
+    -- LrHttp.postMultipart( url, content, headers, timeout, callbackFn, suppressFormData )
+end
+
+-- *************************************************
+local function httpGet()
+-- generic function to call LrHttp.Get
+    -- LrHttp.get( url, headers, timeout )  
+
 end
 
 -- *************************************************

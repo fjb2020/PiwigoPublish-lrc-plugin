@@ -50,11 +50,16 @@ _G.LrExportSettings = import "LrExportSettings"
 -- Global requires
 _G.JSON = require "JSON"
 _G.utils = require "utils"
+-- _G.defs = require "PWDefinitions"
+
+_G.PWSession = require "PWSession"
 _G.PiwigoAPI = require "PiwigoAPI"
 _G.log = require("logger")
 
 -- Global initializations
 _G.prefs = _G.LrPrefs.prefsForPlugin()
-_G.debugEnabled = false
+_G.debugEnabled = true
+_G.PiwigoBusy = false
+_G.iconPath = _PLUGIN:resourceId("icons/icon_med.png")
 
 
