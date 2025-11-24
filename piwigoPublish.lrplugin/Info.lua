@@ -34,7 +34,7 @@ return {
 
     
     LrLibraryMenuItems = {
-        -- Menu items for Library -> Plug In Extras -> FJB Universal Plugin
+        -- Menu items for Library -> Plug In Extras -> Piwigo Publisher
         {
             title = "Piwigo Publisher Extra Options",
             file = "PWExtraOptions.lua",

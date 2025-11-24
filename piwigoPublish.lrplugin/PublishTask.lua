@@ -27,8 +27,10 @@ PublishTask = {}
 
 -- ************************************************
 function PublishTask.processRenderedPhotos(functionContext, exportContext)
-
-
+    if PiwigoBusy then
+        return nil
+    end
+    PiwigoBusy = true
     local callStatus ={}
     local exportSession = exportContext.exportSession
     local propertyTable = exportContext.propertyTable
@@ -48,13 +50,12 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
         rv = PiwigoAPI.login(propertyTable, false)
         if not rv then
             LrErrors.throwUserError('Publish photos to Piwigo - cannot connect to piwigo at ' .. propertyTable.host)
+            PiwigoBusy = false
             return nil
         end
     end
 
     log.debug('PublishTask.processRenderedPhotos - publishSettings:\n' .. utils.serialiseVar(propertyTable))
-
-
 
     local publishedCollection = exportContext.publishedCollection
     local albumId = publishedCollection:getRemoteId()
@@ -66,6 +67,7 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
     rv, checkCats = PiwigoAPI.pwCategoriesGet(propertyTable, albumId)
     if not rv then
         LrErrors.throwUserError('Publish photos to Piwigo - cannot check category exists on piwigo at ' .. propertyTable.host)
+        PiwigoBusy = false
         return nil
     end
 
@@ -73,6 +75,7 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
 
     if utils.nilOrEmpty(checkCats) then
         -- todo - create album on piwigo if missing
+        -- but - album may exist and permissions may have changed so we now can't see it.
         local metaData = {}
         callStatus = {}
         metaData.albumName = albumName
@@ -82,11 +85,13 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
             --exportSession:recordRemoteCollectionUrl(callStatus.albumURL))
         else
             LrErrors.throwUserError('Publish photos to Piwigo - cannot create Piwigo album for  ' .. albumName)
+            PiwigoBusy = false
             return nil
         end
         
         -- this shouldn't happen as piwigo albums are created as part of the LrC create album / create publishedCollectionSet routines
         LrErrors.throwUserError('Publish photos to Piwigo - missing Piwigo album for  ' .. albumName)
+        PiwigoBusy = false
         return nil
     end
 
@@ -146,11 +151,15 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
         end
     end
     progressScope:done()
+    PiwigoBusy = false
 end
 
 -- ************************************************
 function PublishTask.deletePhotosFromPublishedCollection(publishSettings, arrayOfPhotoIds, deletedCallback, localCollectionId)
-
+    if PiwigoBusy then
+        return nil
+    end
+    PiwigoBusy = true
     local callStatus ={}
 
     log.debug('PublishTask.deletePhotosFromPublishedCollection - publishSettings:\n' .. utils.serialiseVar(publishSettings))
@@ -165,6 +174,7 @@ function PublishTask.deletePhotosFromPublishedCollection(publishSettings, arrayO
         local rv = PiwigoAPI.login(publishSettings, false)
         if not rv then
             LrErrors.throwUserError('Delete Photos from Collection - cannot connect to piwigo at ' .. publishSettings.url)
+            PiwigoBusy = false
             return nil
         end
     end
@@ -176,17 +186,15 @@ function PublishTask.deletePhotosFromPublishedCollection(publishSettings, arrayO
 -- check if image is another album on Piwigo
 -- if not, can delete image,otherwise remove association with this ablum
 
-
         callStatus = PiwigoAPI.deletePhoto(publishSettings,pwCatID,pwImageID, callStatus)
         if callStatus.status then
-
             deletedCallback(arrayOfPhotoIds[i])
         else
             LrErrors.throwUserError('Failed to delete asset ' .. pwImageID .. ' from Piwigo - ' .. callStatus.statusMsg, 'Failed to delete photo')
         end
 
     end
-
+    PiwigoBusy = false
 end
 
 -- ************************************************
@@ -227,7 +235,10 @@ end
 function PublishTask.validatePublishedCollectionName(name)
 
     log.debug("PublishTask.validatePublishedCollectionName")
-    return true, '' -- TODO
+    if PiwigoBusy then
+        return false, "Piwigo is busy. Please try later."
+    end
+    return true
 
 end
 
@@ -394,6 +405,11 @@ function PublishTask.reparentPublishedCollection( publishSettings, info )
   -- ablums being rearranged in publish service
     -- neee to reflect this in piwigo
 
+    if PiwigoBusy then
+        -- pwigo processing another request - throw error
+           error("Piwigo is busy. Please try later.")
+    end
+
     local callStatus ={}
     local allParents= info.parents
     local myCat = info.remoteId
@@ -446,7 +462,11 @@ function PublishTask.renamePublishedCollection(publishSettings, info)
     if utils.nilOrEmpty(remoteId) then
         callStatus.statusDesc = "no album found on Piwigo"
     else
-        callStatus = PiwigoAPI.pwCategoriesSetinfo(publishSettings,info, callStatus)
+        if PiwigoBusy then
+            callStatus.statusDesc = "Piwigo is busy. Please try later."
+        else
+            callStatus = PiwigoAPI.pwCategoriesSetinfo(publishSettings,info, callStatus)
+        end
     end
     if not(callStatus.status) then
         log.debug("PublishTask.renamePublishedCollection - reverting name back to " .. oldName .. " from " .. newName)
@@ -479,7 +499,10 @@ end
 -- ************************************************
 function PublishTask.deletePublishedCollection(publishSettings, info)
 
-  
+    if PiwigoBusy then
+        -- pwigo processing another request - throw error
+        error("Piwigo is busy. Please try later.")
+    end
     local callStatus = {}
     callStatus.status = false
     -- called for both collections and collectionsets

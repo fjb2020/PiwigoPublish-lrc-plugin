@@ -19,4 +19,11 @@ function M.info(msg)
 end
 
 -- *************************************************
+function M.error(msg)
+    if debugEnabled then
+        logger:error(msg)
+    end
+end
+
+-- *************************************************
 return M

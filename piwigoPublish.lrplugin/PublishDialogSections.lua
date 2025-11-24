@@ -28,6 +28,7 @@ PublishDialogSections = {}
 function PublishDialogSections.startDialog(propertyTable)
 
   	log.debug('PublishDialogSections.startDialog')
+	log.debug('propertyTable\n' .. utils.serialiseVar(propertyTable))
 
 	-- log.debug('propertyTable contents: ' .. utils.serialiseVar(propertyTable))
 	propertyTable:addObserver('host', PiwigoAPI.ConnectionChange)
@@ -58,14 +59,35 @@ local function connectionDialog (f, propertyTable, pwInstance)
 return {
 		title = "Piwigo Host Settings",
 		bind_to_object = propertyTable,
-		f:row {
+
 		-- TOP: icon + version block
-            f:picture {
-				alignment = 'left',
-                value = iconPath,
-				--value = _PLUGIN:resourceId("icons/icon_med.png"),
-            },
+		f:row {
+				f:picture {
+					alignment = 'left',
+					value = iconPath,
+					--value = _PLUGIN:resourceId("icons/icon_med.png"),
+				},
+			f:column {
+				spacing = f:control_spacing(),
+				f:spacer { height = 1 },
+				f:row {
+					f:static_text {
+						title = "    Piwigo Publisher Plugin",
+						font = "<system/bold>",
+						alignment = 'left',
+						width = share 'labelWidth',
+					},
+				},
+				f:row {
+					f:static_text {
+						title = "    Plugin Version 20251117.3",
+						alignment = 'left',
+						width = share 'labelWidth',
+					},
+				},
+			},
 		},
+
 		-- PW Host
 		f:spacer { height = 1 },
         f:row {
@@ -85,6 +107,16 @@ return {
 				value = bind 'host',
 				alignment = 'left',
 				width_in_chars = 30,
+				validate = function (v, url)
+					local sanitizedURL = PiwigoAPI.sanityCheckAndFixURL(url)
+					if sanitizedURL == url then
+						return true, url, ''
+					elseif not (sanitizedURL == nil) then
+						LrDialogs.message('Entered URL was autocorrected to ' .. sanitizedURL)
+						return true, sanitizedURL, ''
+					end
+					return false, url, 'Entered URL not valid.'
+				end,
 			},
 			f:push_button {
 				title = "Check connection",
@@ -155,7 +187,6 @@ return {
 			},
 		},
 	}
-
 end
 
 -- *************************************************
@@ -198,6 +229,7 @@ local function prefsDialog (f, propertyTable)
 				tooltip = "Click to fetch the current album structure from the Piwigo Host above. Only albums the user has permission to see will be included",
 			},
 		},
+		--[[
 		f:spacer { height = 2 },
 		f:row {
 			f:push_button {
@@ -263,7 +295,7 @@ local function prefsDialog (f, propertyTable)
 		},
 
 
-
+]]
 		
 	}
 end

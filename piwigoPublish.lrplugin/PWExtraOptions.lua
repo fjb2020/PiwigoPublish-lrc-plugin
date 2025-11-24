@@ -23,7 +23,7 @@
 -- *************************************************
 local function main()
 
-     LrFunctionContext.callWithContext("PWExtraOptionsContext", function(context)
+    LrFunctionContext.callWithContext("PWExtraOptionsContext", function(context)
         -- Create a property table inside the context
         
         log.debug("PWExtraOptions - icons is at " .. _PLUGIN.path .. '/icons/icon.png')

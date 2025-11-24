@@ -59,6 +59,7 @@ _G.log = require("logger")
 -- Global initializations
 _G.prefs = _G.LrPrefs.prefsForPlugin()
 _G.debugEnabled = true
-
+_G.PiwigoBusy = false
 _G.iconPath = _PLUGIN:resourceId("icons/icon_med.png")
+
 

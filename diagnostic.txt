@@ -1,0 +1,7 @@
+Plug-in error log for plug-in at: /Volumes/EXT-Data/Nextcloud/github/lrc-plugins/PiwigoPublish/piwigoPublish.lrplugin
+
+**** Error 1
+
+This plug-in’s post-processing task did not finish successfully.
+Publish photos to Piwigo - cannot connect to piwigo at http://sp-piwigo-test/piwigo
+
