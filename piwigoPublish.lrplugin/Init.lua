@@ -52,7 +52,6 @@ _G.JSON = require "JSON"
 _G.utils = require "utils"
 -- _G.defs = require "PWDefinitions"
 
-_G.PWSession = require "PWSession"
 _G.PiwigoAPI = require "PiwigoAPI"
 _G.log = require("logger")
 

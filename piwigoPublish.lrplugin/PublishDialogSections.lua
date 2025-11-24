@@ -78,7 +78,7 @@ return {
 				},
 				f:row {
 					f:static_text {
-						title = "    Plugin Version 20251117.3",
+						title = "    Plugin Version 20251124.1",
 						alignment = 'left',
 						width = share 'labelWidth',
 					},
