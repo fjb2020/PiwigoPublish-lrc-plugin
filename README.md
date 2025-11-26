@@ -31,7 +31,6 @@ Current Version: 20251124.1
 * Import collection/set/image structure from another publish service
     * if remoteIds / URLs are present these will be copied. Useful to copy another publish service where a Piwigo host is the target without having to clear the existing Piwigo albums prior to re-publishing.
 * Keyword Rules - customisation of how LrC keywords are exported to Piwigo
-* Support for Piwigo API Keys when released - due in Piwigo 16.0.0 (currently 16.0.0RC1) - https://piwigo.org/forum/viewtopic.php?id=34376
 * Localisation
 
 ## The following functionality is not currently planned:
@@ -83,6 +82,9 @@ The development environment is:
 - Apple macOS Tahoe 26.1
 - Lightroom Classic 15.0.1 release
 - Piwigo 15.7.0 on Ubuntu 22.04.5 LTS
+- Piwigo 16.0.0 on Ubuntu 22.04.5 LTS
+
+The plugin has now been tested with Piwigo 16.0.0, including the use of API keys. When using an API key, login credentials are as follows: instead of your username, enter the API key ID (starting with “pkid-…”), and instead of your password, enter the secret of the API key.
 
 The released version is currently at beta 0.9.4. As a beta release the code is still full of debugging messages as I've grappled with the complexities of accessing the Piwigo web service API via the LrHttp namespace with all it's idiosyncrasies. These will be tidied up, and a more consistent pattern for the various LrHttp calls is planned.
 
