@@ -26,9 +26,9 @@ PublishDialogSections = {}
 
 -- *************************************************
 function PublishDialogSections.startDialog(propertyTable)
-
-  	log.debug('PublishDialogSections.startDialog')
-	log.debug('propertyTable\n' .. utils.serialiseVar(propertyTable))
+	
+  	log:info('PublishDialogSections.startDialog')
+	log:info('propertyTable\n' .. utils.serialiseVar(propertyTable))
 	if not propertyTable.LR_editingExistingPublishConnection then
 		propertyTable.userName = nil
 		propertyTable.userPW = nil
@@ -38,10 +38,10 @@ function PublishDialogSections.startDialog(propertyTable)
 		propertyTable.ConStatus = "Not Connected"
 	end
 
-	-- log.debug('propertyTable contents: ' .. utils.serialiseVar(propertyTable))
 	propertyTable:addObserver('host', PiwigoAPI.ConnectionChange)
 	propertyTable:addObserver('userName', PiwigoAPI.ConnectionChange)
 	propertyTable:addObserver('userPW', PiwigoAPI.ConnectionChange)
+	
 
 	if propertyTable.host and propertyTable.userName and propertyTable.userPW and not propertyTable.Connected then
 		-- try to login 
@@ -86,7 +86,7 @@ return {
 				},
 				f:row {
 					f:static_text {
-						title = "    Plugin Version 20251124.1",
+						title = "    Plugin Version " .. pluginVersion,
 						alignment = 'left',
 						width = share 'labelWidth',
 					},
@@ -300,9 +300,12 @@ local function prefsDialog (f, propertyTable)
 			},
 		},
 
+		]]	
 
-]]
-		
+
+
+
+
 	}
 end
 --

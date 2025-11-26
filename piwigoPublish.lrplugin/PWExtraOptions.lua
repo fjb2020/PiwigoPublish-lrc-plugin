@@ -26,7 +26,7 @@ local function main()
     LrFunctionContext.callWithContext("PWExtraOptionsContext", function(context)
         -- Create a property table inside the context
         
-        log.debug("PWExtraOptions - icons is at " .. _PLUGIN.path .. '/icons/icon.png')
+        log:info("PWExtraOptions - icons is at " .. _PLUGIN.path .. '/icons/icon.png')
 
 
         local allServices = PiwigoAPI.getPublishServicesForPlugin(_PLUGIN.id)

@@ -28,7 +28,7 @@ local PiwigoAPI = {}
 
 -- *************************************************
 function PiwigoAPI.ConnectionChange(propertyTable)
-	log.debug('PublishDialogSections.ConnectionChange')
+	log:info('PublishDialogSections.ConnectionChange')
 	propertyTable.ConStatus = "Not Connected"
 	propertyTable.Connected = false
 	propertyTable.ConCheck = true
@@ -62,15 +62,15 @@ function PiwigoAPI.getPublishService(propertyTable)
     local services = catalog:getPublishServices()
     local thisService
     local foundService = false
+    log:info("PiwigoAPI.getPublishService" )
+
     for _, s in ipairs(services) do
         local pluginSettings = s:getPublishSettings()
         local pluginID = s:getPluginId()
         local pluginName = s:getName()  
 
-        log.debug("Checking service " .. pluginName .. ", ID " .. pluginID .. ", settings " .. utils.serialiseVar(pluginSettings))
-
         if pluginSettings.host == propertyTable.host and
-           pluginSettings.userName == propertyTable.userName then
+            pluginSettings.userName == propertyTable.userName then
             thisService = s
             foundService = true
             break
@@ -93,10 +93,10 @@ function PiwigoAPI.sanityCheckAndFixURL(url)
     local sanitizedURL = url:gsub("/$", "")
     if sanitizedURL then
         if string.len(sanitizedURL) == string.len(url) then
-            log.debug('sanityCheckAndFixURL: URL is completely sane.')
+            log:info('sanityCheckAndFixURL: URL is completely sane.')
             url = sanitizedURL
         else
-            log.debug('sanityCheckAndFixURL: Fixed URL: removed trailing paths.')
+            log:info('sanityCheckAndFixURL: Fixed URL: removed trailing paths.')
             url = sanitizedURL
         end
     elseif not string.match(url, "^https?://") then
@@ -203,7 +203,6 @@ function PiwigoAPI.pwConnect(propertyTable)
                 if h.field:lower() == "set-cookie" then
                     table.insert(allCookies, h.value)
                     local nameValue = h.value:match("^([^;]+)")
-                    log.debug("namevalue is " .. utils.serialiseVar(nameValue))
                     if nameValue and string.sub(nameValue,1,3) == "pwg" then
                         table.insert(cookies, nameValue)
                         if nameValue:match("^pwg_id=") then
@@ -424,7 +423,7 @@ function PiwigoAPI.importAlbums(propertyTable)
     -- if collections or collections sets already exist they are maintained
     -- 
     local rv
-
+    log:info("PiwigoAPI:importAlbums - starting import of albums from Piwigo")
     -- getPublishService to get reference to this publish service - returned in propertyTable._service
     rv = PiwigoAPI.getPublishService(propertyTable, false)
     if not rv then
@@ -456,11 +455,12 @@ function PiwigoAPI.importAlbums(propertyTable)
         utils.handleError('PiwigoAPI:importAlbums - no categories found in piwigo', "Error: No categories found in Piwigo server.")
         return
     end     
-
+    log:info("PiwigoAPI:importAlbums - allCats\n" .. utils.serialiseVar(allCats))
 
 
     -- hierarchical table of categories
     local catHierarchy = buildCatHierarchy(allCats)
+    log:info("PiwigoAPI:importAlbums - built category hierarchy with " .. #catHierarchy .. " top level albums")     
 
     -- in Piwigo an album can have photos as well as sub-albums. In LrC, a collectionset does not have photos
     -- ToDo - deal with this via creating a collection within each collection set for photos at this level in Piwigo - so called super-album
@@ -837,13 +837,13 @@ function PiwigoAPI.checkPhoto(propertyTable, pwImageID)
 
     local getUrl = utils.buildGet(propertyTable.pwurl, urlParams)
 
-    log.debug("PiwigoAPI.checkPhoto - calling " .. getUrl)
-    log.debug("PiwigoAPI.checkPhoto - headers are " .. utils.serialiseVar(headers))
+    log:info("PiwigoAPI.checkPhoto - calling " .. getUrl)
+    log:info("PiwigoAPI.checkPhoto - headers are " .. utils.serialiseVar(headers))
 
     local httpResponse, httpHeaders = LrHttp.get(getUrl,headers)
 
-    log.debug("PiwigoAPI.checkPhoto - httpHeaders\n" .. utils.serialiseVar(httpHeaders))
-    log.debug("PiwigoAPI.checkPhoto - httpResponse\n" .. utils.serialiseVar(httpResponse))
+    log:info("PiwigoAPI.checkPhoto - httpHeaders\n" .. utils.serialiseVar(httpHeaders))
+    log:info("PiwigoAPI.checkPhoto - httpResponse\n" .. utils.serialiseVar(httpResponse))
 
     if httpHeaders.status == 200 then
         -- got response from Piwigo
@@ -888,14 +888,14 @@ function PiwigoAPI.updateGallery(propertyTable, exportFilename, metaData, callSt
     }
     if metaData.Remoteid ~= "" then
         -- check if remote photo exists and ignore parameter if not
-        log.debug("PiwigoAPI.updateGallery - checking for existing photo with remoteid " .. metaData.Remoteid)  
+        log:info("PiwigoAPI.updateGallery - checking for existing photo with remoteid " .. metaData.Remoteid)  
         local rtnStatus = PiwigoAPI.checkPhoto(propertyTable, metaData.Remoteid)
-        log.debug("PiwigoAPI.updateGallery - checkPhoto returned \n" .. utils.serialiseVar(rtnStatus))
+        log:info("PiwigoAPI.updateGallery - checkPhoto returned \n" .. utils.serialiseVar(rtnStatus))
         if rtnStatus.status then
-            log.debug("PiwigoAPI.updateGallery - existing photo found with remoteid " .. metaData.Remoteid .. " - will update")
+            log:info("PiwigoAPI.updateGallery - existing photo found with remoteid " .. metaData.Remoteid .. " - will update")
             table.insert(params, { name = "image_id", value = tostring(metaData.Remoteid)})
         else
-            log.debug("PiwigoAPI.updateGallery - no existing photo found with remoteid " .. metaData.Remoteid .. " - will upload new photo")
+            log:info("PiwigoAPI.updateGallery - no existing photo found with remoteid " .. metaData.Remoteid .. " - will upload new photo")
         end
     end
     local fileType = LrPathUtils.extension(exportFilename):lower()
@@ -917,7 +917,7 @@ function PiwigoAPI.updateGallery(propertyTable, exportFilename, metaData, callSt
 
     local uploadSuccess = false
 -- Build multipart POST request to pwg.images.addSimple
-    log.debug("PiwigoAPI.updateGallery - params \n" .. utils.serialiseVar(params))
+    log:info("PiwigoAPI.updateGallery - params \n" .. utils.serialiseVar(params))
 
     local status, statusDes
     local httpResponse, httpHeaders = LrHttp.postMultipart(
@@ -993,9 +993,9 @@ function PiwigoAPI.deletePhoto(propertyTable, pwCatID, pwImageID, callStatus)
         { name = "pwg_token", value = propertyTable.token}
     }
   
-    log.debug("PiwigoAPI.deletePhoto - propertyTable \n " .. utils.serialiseVar(propertyTable))
-    log.debug("PiwigoAPI.deletePhoto - params \n" .. utils.serialiseVar(params))
-        --log.debug("PiwigoAPI.deletePhoto - headrs \n" .. utils.serialiseVar(headers))
+    log:info("PiwigoAPI.deletePhoto - propertyTable \n " .. utils.serialiseVar(propertyTable))
+    log:info("PiwigoAPI.deletePhoto - params \n" .. utils.serialiseVar(params))
+        --log:info("PiwigoAPI.deletePhoto - headrs \n" .. utils.serialiseVar(headers))
 
     local httpResponse, httpHeaders = LrHttp.postMultipart(
         propertyTable.pwurl, 
@@ -1005,8 +1005,8 @@ function PiwigoAPI.deletePhoto(propertyTable, pwCatID, pwImageID, callStatus)
         }
     )
 
-    log.debug("PiwigoAPI.deletePhoto - httpResponse \n" .. utils.serialiseVar(httpResponse))
-    log.debug("PiwigoAPI.deletePhoto - httpHeaders \n" .. utils.serialiseVar(httpHeaders))
+    log:info("PiwigoAPI.deletePhoto - httpResponse \n" .. utils.serialiseVar(httpResponse))
+    log:info("PiwigoAPI.deletePhoto - httpHeaders \n" .. utils.serialiseVar(httpHeaders))
  
     local body
     if httpResponse then 
@@ -1040,8 +1040,8 @@ end
 
 -- *************************************************
 function PiwigoAPI.setAlbumCover(propertyTable)
-    log.debug("PiwigoAPI.setAlbumCover")
-    log.debug("propertyTable\n" .. utils.serialiseVar(propertyTable))
+    log:info("PiwigoAPI.setAlbumCover")
+    log:info("propertyTable\n" .. utils.serialiseVar(propertyTable))
     local catalog = LrApplication.activeCatalog()
     local selPhotos =  catalog:getTargetPhotos()
     if utils.nilOrEmpty(selPhotos) then
@@ -1055,13 +1055,13 @@ function PiwigoAPI.setAlbumCover(propertyTable)
 
 -- we now have a single photo.
     local Photo = selPhotos[1]
-    log.debug("Selected photo is " .. Photo:getFormattedMetadata("fileName"))
+    log:info("Selected photo is " .. Photo:getFormattedMetadata("fileName"))
 -- need to find which collection is active to find correct Piwigo album and if it has been published
     local publishService = propertyTable.publishService  -- LrPublishConnection
     local collection = propertyTable.collection          -- LrPublishedCollection being edited
 
-    log.debug("Publishservice is\n" .. utils.serialiseVar(publishService))
-    log.debug("Collection is\n" ..  utils.serialiseVar(collection))
+    log:info("Publishservice is\n" .. utils.serialiseVar(publishService))
+    log:info("Collection is\n" ..  utils.serialiseVar(collection))
 
 --[[
     if source:className() == "LrPublishedCollection" then

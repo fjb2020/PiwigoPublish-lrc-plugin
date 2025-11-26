@@ -50,6 +50,7 @@ return {
 		{ key = 'host', default = '' },
 		{ key = "userName", default = '' },
 		{ key = "userPW", default = '' },
+
 	},
 
 	-- metadataThatTriggersRepublish = {},

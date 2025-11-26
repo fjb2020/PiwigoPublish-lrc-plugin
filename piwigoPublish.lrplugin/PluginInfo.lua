@@ -1,9 +1,8 @@
 --[[
 
-    logger.lua
-
-    lua functions to accss the Piwigo Web API
-    see https://github.com/Piwigo/Piwigo/wiki/Piwigo-Web-API
+    PluginInfo.lua
+    
+    Publish Tasks for Piwigo Publisher plugin
 
     Copyright (C) 2024 Fiona Boston <fiona@fbphotography.uk>.
 
@@ -23,34 +22,13 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
--- logging functions
 
+require "PluginInfoDialogSections"
 
-local M = {}
-local LrLogger = import 'LrLogger'
-local logger = LrLogger('piwigoPublish')
-logger:enable('print')
+return {
+    startDialog = PluginInfoDialogSections.startDialog,
+    endDialog = PluginInfoDialogSections.endDialog,
 
--- *************************************************
-function M.debug(msg)
-    if debugEnabled then
-        logger:trace(msg)
-    end
-end
-
--- *************************************************
-function M.info(msg)
-    if debugEnabled then
-        logger:info(msg)
-    end
-end
-
--- *************************************************
-function M.error(msg)
-    if debugEnabled then
-        logger:error(msg)
-    end
-end
-
--- *************************************************
-return M
+    -- sectionsForTopOfDialog = PluginInfoDialogSections.sectionsForTopOfDialog,
+    sectionsForBottomOfDialog = PluginInfoDialogSections.sectionsForBottomOfDialog,
+}

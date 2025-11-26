@@ -50,15 +50,30 @@ _G.LrExportSettings = import "LrExportSettings"
 -- Global requires
 _G.JSON = require "JSON"
 _G.utils = require "utils"
--- _G.defs = require "PWDefinitions"
-
 _G.PiwigoAPI = require "PiwigoAPI"
-_G.log = require("logger")
+_G.PWAPI = require "PWAPI"
 
--- Global initializations
+-- Global initializations 
 _G.prefs = _G.LrPrefs.prefsForPlugin()
-_G.debugEnabled = false
+-- logger setup
+_G.log = import 'LrLogger' ('PiwigoPublishPlugin')
+if prefs.debugEnabled == nil then
+    prefs.debugEnabled = false
+end
+if prefs.debugToFile == nil then 
+    prefs.debugToFile = false
+end
+if prefs.debugEnabled then
+    if prefs.debugToFile then
+        log:enable("logfile")
+    else
+        log:enable("print")
+    end
+else
+    log:disable()
+end
+
 _G.PiwigoBusy = false
 _G.iconPath = _PLUGIN:resourceId("icons/icon_med.png")
-
+_G.pluginVersion = "20251125.2"
 

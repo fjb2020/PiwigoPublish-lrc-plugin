@@ -51,7 +51,7 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
         end
     end
 
-    log.debug('PublishTask.processRenderedPhotos - publishSettings:\n' .. utils.serialiseVar(propertyTable))
+    log:info('PublishTask.processRenderedPhotos - publishSettings:\n' .. utils.serialiseVar(propertyTable))
 
     local publishedCollection = exportContext.publishedCollection
     local albumId = publishedCollection:getRemoteId()
@@ -107,7 +107,6 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
 
         if success then
             -- photo has been exported to temporary location - upload to piwigo
-         
             callStatus = {}
             local filePath = pathOrMessage
             local metaData = {}
@@ -208,7 +207,7 @@ end
 -- ************************************************
 function PublishTask.validatePublishedCollectionName(name)
 
-    log.debug("PublishTask.validatePublishedCollectionName")
+    log:info("PublishTask.validatePublishedCollectionName")
     if PiwigoBusy then
         return false, "Piwigo is busy. Please try later."
     end

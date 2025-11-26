@@ -261,7 +261,7 @@ function utils.checkKw(thisPhoto, searchKw)
     -- searchKw may be hierarchical - so split into each level
     local searchKwTable = utils.tagParse(searchKw)
     local searchKwLevels = #searchKwTable
-    --log.debug("Looking for " .. searchKw .. " - " .. searchKwLevels .. " levels - " .. utils.serialiseVar(searchKwTable))
+    --log:info("Looking for " .. searchKw .. " - " .. searchKwLevels .. " levels - " .. utils.serialiseVar(searchKwTable))
 
     local foundKW = nil -- return the keyword we find in this variable
     local stopSearch = false
@@ -272,33 +272,33 @@ function utils.checkKw(thisPhoto, searchKw)
         kwHierarchy = {}
         kwHierarchy = utils.GetKWHierarchy(kwHierarchy,thisKeyword,1)
         local thisKwLevels = #kwHierarchy
-        --log.debug("Checking image kw " .. thisKeyword:getName() .. " - " ..  thisKwLevels.. " levels ")
+        --log:info("Checking image kw " .. thisKeyword:getName() .. " - " ..  thisKwLevels.. " levels ")
    
         for kk,kwLevel in ipairs(kwHierarchy) do
             local kwLevelName = kwLevel:getName()
-            --log.debug("Level " .. kk .. " is " .. kwLevelName)
+            --log:info("Level " .. kk .. " is " .. kwLevelName)
             if not stopSearch then
                 if kwLevelName == searchKwTable[1] then
                     -- if we're looking for hierarchical kw need to check other levels for match aswell
                     if searchKwLevels > 1 then
-                        --log.debug("Multi level kw search - " .. kwLevelName )
+                        --log:info("Multi level kw search - " .. kwLevelName )
                         if thisKwLevels >= searchKwLevels then
                             local foundHKW = true
                             for hh = 2, searchKwLevels do
-                                --log.debug("Multi level kw search at level - " .. hh .. ", " .. searchKwTable[hh] .. ", " .. kwHierarchy[kk-hh+1]:getName())
+                                --log:info("Multi level kw search at level - " .. hh .. ", " .. searchKwTable[hh] .. ", " .. kwHierarchy[kk-hh+1]:getName())
                                 if searchKwTable[hh] ~= kwHierarchy[kk-hh+1]:getName() then
                                     foundHKW = false
                                 end
                             end
                             if foundHKW then
                                 foundKW = thisKeyword
-                                --log.debug("Multilevel - Found " .. foundKW:getName())
+                                --log:info("Multilevel - Found " .. foundKW:getName())
                                 stopSearch = true
                             end
                         end
                     else
                         foundKW = thisKeyword
-                        --log.debug("Single Level - Found " .. foundKW:getName())
+                        --log:info("Single Level - Found " .. foundKW:getName())
                         stopSearch = true
                     end
                 end
@@ -320,16 +320,16 @@ function utils.recursiveSearch(collNode, findName)
 -- Recursively search for a published collection or published collection set
 -- matching a given remoteId (string or number)
 
-    --log.debug("recursiveSearch - collNode: " .. collNode:getName() .. " for name: " .. findName)
-    --log.debug("recursiveSearch - collNode type is " .. tostring(collNode:type()))
+    --log:info("recursiveSearch - collNode: " .. collNode:getName() .. " for name: " .. findName)
+    --log:info("recursiveSearch - collNode type is " .. tostring(collNode:type()))
 
     -- Check this collNode if it has a remote ID (only if collNode is a collection or set)
     if collNode:type() == 'LrPublishService' or collNode:type() == 'LrPublishedCollectionSet' then
-        --log.debug("recursiveSearch 1 - " .. collNode:type(), collNode:getName())
+        --log:info("recursiveSearch 1 - " .. collNode:type(), collNode:getName())
         local thisName = collNode:getName()
         if thisName == findName then
             -- this collection or set matches
-            --log.debug("recursiveSearch - ** MATCH ** collNode is matching node: " .. collNode:getName())
+            --log:info("recursiveSearch - ** MATCH ** collNode is matching node: " .. collNode:getName())
             return collNode
         end
     end
@@ -340,10 +340,10 @@ function utils.recursiveSearch(collNode, findName)
             for _, coll in ipairs(children) do
                 local type = coll:type()
                 local thisName = coll:getName()
-             --  log.debug("recursiveSearch 2 - " .. type,thisName)
+             --  log:info("recursiveSearch 2 - " .. type,thisName)
                 if thisName == findName then
                     -- this collection matches
-                    --log.debug("recursiveSearch - ** MATCH ** Found matching collection: " .. coll:getName())
+                    --log:info("recursiveSearch - ** MATCH ** Found matching collection: " .. coll:getName())
                     return coll
                 end
             end
@@ -358,7 +358,7 @@ function utils.recursiveSearch(collNode, findName)
                 local foundSet = utils.recursiveSearch(set, findName)
                 if foundSet then 
                     -- this set matches
-                    --log.debug("recursiveSearch - ** MATCH ** Found matching collection set: " .. foundSet:getName())
+                    --log:info("recursiveSearch - ** MATCH ** Found matching collection set: " .. foundSet:getName())
                     return foundSet
                 end
             end
@@ -515,6 +515,30 @@ function utils.extract_cookies(raw)
 
 end
 
+
+function utils.getLogfilePath()
+    local filename = 'PiwigoPublishPlugin.log'
+    local macPath14 = LrPathUtils.getStandardFilePath('home') .. "/Library/Logs/Adobe/Lightroom/LrClassicLogs/"
+    local winPath14 = LrPathUtils.getStandardFilePath('home') .. "\\AppData\\Local\\Adobe\\Lightroom\\Logs\\LrClassicLogs\\"
+    local macPathOld = LrPathUtils.getStandardFilePath('documents') .. "/LrClassicLogs/"
+    local winPathOld = LrPathUtils.getStandardFilePath('documents') .. "\\LrClassicLogs\\"
+
+    local lightroomVersion = LrApplication.versionTable()
+
+    if lightroomVersion.major >= 14 then
+        if MAC_ENV then
+            return macPath14 .. filename
+        else
+            return winPath14 .. filename
+        end
+    else
+        if MAC_ENV then
+            return macPathOld .. filename
+        else
+            return winPathOld .. filename
+        end
+    end
+end
 
 -- *************************************************
 return utils
