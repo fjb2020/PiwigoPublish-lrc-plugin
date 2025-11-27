@@ -2,7 +2,7 @@
 
 A Lightroom Classic plugin which uploads images to a Piwigo host via the Piwigo REST API.
 
-Current Version: 20251124.1
+Current Version: 20251127.3
 
 ## The following fuctionality is available:
 
