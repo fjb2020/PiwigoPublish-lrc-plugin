@@ -340,13 +340,11 @@ end
 function utils.recursivePubCollectionSearchByRemoteID(collNode, findID)
 -- Recursively search for a published collection or published collection set
 -- matching a given remoteId (string or number)
-    log:info("recursivePubCollectionSearchByRemoteID " .. collNode:getName(), findID)
 
     -- Check this collNode if it has a remote ID (only if collNode is a collection or set)
     if collNode:type() == 'LrPublishedCollection' or collNode:type() == 'LrPublishedCollectionSet' then
         local thisID = collNode:getRemoteId()
         if thisID == findID then
-            log:info("recursivePubCollectionSearchByRemoteID  - found collNade " .. findID)
             return collNode
         end
     end
@@ -354,14 +352,11 @@ function utils.recursivePubCollectionSearchByRemoteID(collNode, findID)
     local children = collNode:getChildCollections()
     if children then
         if children then
-            log:info("recursivePubCollectionSearchByRemoteID - checking " .. #children .. " child collections")
             for _, coll in ipairs(children) do
                 local type = coll:type()
                 local thisID = coll:getRemoteId()
-                log:info("recursivePubCollectionSearchByRemoteID  - checking childnode " .. coll:getName(), thisID)
                 if thisID == findID then
                     -- this collection matches
-                    log:info("recursivePubCollectionSearchByRemoteID  - found childnode " .. coll:getName(), findID)
                     return coll
                 end
             end

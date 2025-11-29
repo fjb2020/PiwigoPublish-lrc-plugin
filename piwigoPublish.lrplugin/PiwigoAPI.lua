@@ -259,12 +259,13 @@ local function buildCategoryPath(cat, allCats)
 end
 -- *************************************************
 local function createPublishCollection(catalog, publishService, propertyTable, name, remoteId, parentSet)
-    
+    -- create new collection or return existing
+    log:info("createPublishCollection - " .. name .. ", " .. remoteId)
     local newColl
     catalog:withWriteAccessDo("Create PublishedCollection ", function()
         newColl = publishService:createPublishedCollection( name, parentSet, true )
     end)
-    -- now add remoteids and urls to collection
+    -- add remoteids and urls to collection
     catalog:withWriteAccessDo("Add Piwigo details to collection", function() 
         newColl:setRemoteId( remoteId)
         newColl:setRemoteUrl( propertyTable.host .. "/index.php?/category/" .. remoteId )
@@ -286,8 +287,7 @@ local function createCollection(propertyTable, node, parentNode, isLeafNode, sta
 
     -- getPublishService to get reference to this publish service - returned in propertyTable._service
     -- needs to be refreshed each time  to relfect lastest state of publishedCollections created further below
-    log:info("createCollection")
-    log:info("Node " .. node.id, node.name)
+    log:info("createCollection for node " .. node.id .. ", " .. node.name)
  
     rv = PiwigoAPI.getPublishService(propertyTable)
     if not rv then
@@ -305,7 +305,6 @@ local function createCollection(propertyTable, node, parentNode, isLeafNode, sta
         parentColl = publishService
     else
         -- find parent publishcollection in this publish service
-        log:info("Looking for parentNode " .. parentNode.id, parentNode.name)
         parentColl = utils.recursivePubCollectionSearchByRemoteID(publishService, parentNode.id)
     end
     if not(parentColl) then
@@ -313,7 +312,6 @@ local function createCollection(propertyTable, node, parentNode, isLeafNode, sta
         stat.errors = stat.errors + 1
     else
         -- look for this collection - create if not found
-        log:info("Looking for node " .. node.id .. ", " .. node.name)
         existingColl = utils.recursivePubCollectionSearchByRemoteID(publishService, node.id)
         if not(existingColl) then
             -- not an existing collection/set for this node and we have got the parent collection/set
@@ -324,14 +322,12 @@ local function createCollection(propertyTable, node, parentNode, isLeafNode, sta
             else
                 if isLeafNode then
                     -- create Publishedcollection
-                    log:info("Create PublishedCollection " .. node.name)
                     catalog:withWriteAccessDo("Create PublishedCollection ", function()
                         newColl = publishService:createPublishedCollection( node.name, parentColl, true )
                     end)
                     stat.collections = stat.collections + 1
                 else
                     -- Create PublishedCollectionSet
-                    log:info("Create PublishedCollectionSet " .. node.name)
                     catalog:withWriteAccessDo("Create PublishedCollectionSet ", function() 
                         newColl = publishService:createPublishedCollectionSet( node.name, parentColl, true )
                     end)
@@ -1172,7 +1168,7 @@ function PiwigoAPI.specialCollections(propertyTable)
         caption = "Starting...",
         functionContext = context,
     }
-    
+
     for s, thisSet in pairs(allSets) do
         progressScope:setPortionComplete(s, #allSets)
         progressScope:setCaption("Processing " .. s .. " of " .. #allSets .. " collction sets")
