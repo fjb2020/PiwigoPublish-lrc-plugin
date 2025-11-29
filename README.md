@@ -39,7 +39,7 @@ Current Version: 20251128.5
 ## Notes on the relationship between Piwigo Albums and LrC Publish Services
 The plugin provides a function to import an existing Piwigo album structure into LrC. It works with the following constraints:
 - If a Piwigo album contains sub-albums, an equivalent Publish Collection Set is created in the LrC Publish Service.
-- If a Piwigo album contains only photographs (i.e. no sub-albums) then a Publish Collection is created in the LrC Publish Service.
+- If a Piwigo album contains only photographs (i.e. no sub-albums) or is empty then a Publish Collection is created in the LrC Publish Service.
 - Piwigo allows an album to contain both photographs and sub albums. LrC does not allow this - a Publish Collection Set can contain only further Publish Collection Sets, or Publish Collections, not both. Publish Collections can contain only photographs and not further Publish Collection Sets. A workround for this constraint is under development.
 - Piwigo allows albums with the same name to exist under the same parent. LrC does not allow this - albums with the same name can only exist if they are sub albums of different parents within the publish service.
 - The plugin allows the alteration of the Piwigo album structure:
@@ -49,7 +49,7 @@ The plugin provides a function to import an existing Piwigo album structure into
   - Albums may be re-named - right-click -> Rename...
   - Albums may be deleted - right-click -> Delete...
   - All these changes are reflected in the corresponding Piwigo Albums - the Piwigo Album ID (Cat ID) is stored against the corresponding LrC Publish Collection / Set to maintain this relationship
-- Piwigo has no knowledge of the LrC structure (or constraints), so if changes are made to the Piwigo album structure directly in Piwigo these changes are not reflected in Piwigo.
+- Piwigo has no knowledge of the LrC structure (or constraints), so if changes are made to the Piwigo album structure directly in Piwigo these changes are not reflected in LrC.
 - The Import Albums routine can be re-run at any time. It will attempt to add albums added to Piwigo since the last run, noting the constraints above. 
   - If a sub-album has been added to an album that had no sub-albums at the time of first run then an error will be shown and the album won't be created.
   - If an album with a duplicate name has been created under the same parent it will be ignored.
