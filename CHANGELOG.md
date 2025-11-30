@@ -1,8 +1,13 @@
 # Changelog
 
+## [20251130.7] - 2025-11-30
+### Fixed
+- Bug when deleting Special Collections removed incorrect album in Piwigo
+
+
 ## [20251129.6] - 2025-11-29
 ### Added
-- Special collections can be created, allowing Piwigo albums with sub-albums to also have photos published in them
+- Special Collections can be created, allowing Piwigo albums with sub-albums to also have photos published in them
 
 ## [20251129.5] - 2025-11-29
 ### Fixed

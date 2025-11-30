@@ -798,9 +798,8 @@ function PiwigoAPI.pwCategoriesDelete( propertyTable, info, metaData, callStatus
     callStatus.status = false
     local status, statusDes
     local rv
-    -- Check if remoteID exists on Piwigo
-    local checkCats
 
+    local checkCats
     -- check connection to piwigo
     if not (propertyTable.Connected) then
         rv = PiwigoAPI.login(propertyTable, false)
@@ -816,7 +815,7 @@ function PiwigoAPI.pwCategoriesDelete( propertyTable, info, metaData, callStatus
         return callStatus
     end
 
-    -- Check that collection exists as an album on Piwigo and create if not
+    -- Check that collection exists as an album on Piwigo
     rv, checkCats = PiwigoAPI.pwCategoriesGet(propertyTable, metaData.catToDelete)
     if not rv then
         callStatus.statusMsg = 'Delete Album - cannot check album exists on piwigo at ' .. propertyTable.host
@@ -1087,7 +1086,15 @@ function PiwigoAPI.deletePhoto(propertyTable, pwCatID, pwImageID, callStatus)
 
 -- delete image from piwigo via pwg.images.delete
     callStatus.status = false
-    
+    local rv
+    -- check connection to piwigo
+    if not (propertyTable.Connected) then
+        rv = PiwigoAPI.login(propertyTable, false)
+        if not rv then
+            callStatus.statusMsg =  'PiwigoAPI:deletePhoto - cannot connect to piwigo'
+            return callStatus
+        end
+    end
     local params = {
         { name = "method", value = "pwg.images.delete" },
         { name = "image_id", value = tostring(pwImageID) },

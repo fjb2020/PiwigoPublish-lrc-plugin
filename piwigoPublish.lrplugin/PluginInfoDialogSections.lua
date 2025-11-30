@@ -43,7 +43,6 @@ function PluginInfoDialogSections.startDialog(propertyTable)
     propertyTable.debugEnabled = prefs.debugEnabled
     propertyTable.debugToFile = prefs.debugToFile
 
-
 end
 
 -- *************************************************

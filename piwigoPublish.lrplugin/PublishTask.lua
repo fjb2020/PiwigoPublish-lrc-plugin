@@ -235,6 +235,11 @@ function PublishTask.validatePublishedCollectionName(name)
     if PiwigoBusy then
         return false, "Piwigo is busy. Please try later."
     end
+    -- look for [ and ] 
+    if string.sub(name,1,1) == "[" or string.sub(name,-1) == "]" then
+        return false, "Cannot use [ ] at start and end of album name - clashes with special collections"
+    end
+
     return true
 
 end
@@ -373,10 +378,24 @@ end
 function PublishTask.reparentPublishedCollection( publishSettings, info )
   -- ablums being rearranged in publish service
     -- neee to reflect this in piwigo
-
+    log:info("PublishTask.reparentPublishedCollection")
+    log:info("info\n" .. utils.serialiseVar(info))
     if PiwigoBusy then
         -- pwigo processing another request - throw error
            error("Piwigo is busy. Please try later.")
+    end
+
+    -- check for special collection and prevent change if so
+    local publishService = info.publishService
+    local publishCollection = info.publishedCollection
+
+    -- check for special collections and do not delete Piwigo album if so
+    -- can't check remote id against parent remote id as parent will be new parent not current
+    -- so just check name format
+    local thisName = info.name
+    if string.sub(thisName,1,1) == "[" and string.sub(thisName, -1) == "]" then
+        LrErrors.throwUserError("Cannot re-parent a special collection")
+        return false
     end
 
     local callStatus ={}
@@ -397,9 +416,6 @@ function PublishTask.reparentPublishedCollection( publishSettings, info )
         end
         return true
     end)
-    -- TODO - moving collection structure may leave collectionsets with no sub-collections.
-    -- should these be converted to collections so photos can be added
-    -- in piwigo all albums can store photos even if they have sub albums
 end
 
 -- ************************************************
@@ -413,17 +429,19 @@ function PublishTask.renamePublishedCollection(publishSettings, info)
     local newName = info.name
     local collection = info.publishedCollection
     local oldName = collection:getName()
-
-    if utils.nilOrEmpty(remoteId) then
-        callStatus.statusMsg = "no album found on Piwigo"
+    if string.sub(oldName,1,1) == "[" and string.sub(oldName, -1) == "]" then
+        callStatus.statusMsg = "Cannot re-name a special collection"
     else
-        if PiwigoBusy then
-            callStatus.statusMsg = "Piwigo is busy. Please try later."
+        if utils.nilOrEmpty(remoteId) then
+            callStatus.statusMsg = "no album found on Piwigo"
         else
-            callStatus = PiwigoAPI.pwCategoriesSetinfo(publishSettings,info, callStatus)
+            if PiwigoBusy then
+                callStatus.statusMsg = "Piwigo is busy. Please try later."
+            else
+                callStatus = PiwigoAPI.pwCategoriesSetinfo(publishSettings,info, callStatus)
+            end
         end
     end
-
     if not(callStatus.status) then
          LrTasks.startAsyncTask(function()
             LrFunctionContext.callWithContext("revertRename", function(context)
@@ -450,35 +468,61 @@ end
 -- ************************************************
 function PublishTask.deletePublishedCollection(publishSettings, info)
 
+    log:info("PublishTask.deletePublishedCollection")
+    log:info("info\n" .. utils.serialiseVar(info))
+
     if PiwigoBusy then
         -- pwigo processing another request - throw error
         error("Piwigo is busy. Please try later.")
     end
+
+    -- called for both collections and collectionsets
+    local rv
     local callStatus = {}
     callStatus.status = false
-    -- called for both collections and collectionsets
-
-    -- if there are images in album what should happen? 
-    -- Piwigo will create orphans if the album is just deleted
-    --
     local catToDelete = info.remoteId
     local publishService = info.publishService
+    local publishCollection = info.publishedCollection
+
+
+    -- check for special collections and do not delete Piwigo album if so
+    local thisName = info.name
+    local thisRemoteId = info.remoteId
+    local parentName = ""
+    local parentRemoteId = ""
+    local parents = info.parents
+    if #parents > 0 then
+        parentName = parents[#parents].name
+        parentRemoteId = parents[#parents].remoteCollectionId
+    end
+
+    if parentRemoteId == thisRemoteId then
+        -- this is a special collection with the same remote id as it's parent so do not delete remote album
+        -- check photos in collection and remove them from Piwigo
+        if publishCollection:type() == "LrPublishedCollection" then
+            local photosInCollection = publishCollection:getPublishedPhotos()
+            for p, thisPhoto in pairs(photosInCollection) do
+                log:info("PublishTask.deletePublishedCollection - delete photo " .. thisPhoto:getRemoteId())
+                local pwImageID = thisPhoto:getRemoteId()
+                local rtnStatus = PiwigoAPI.deletePhoto(publishSettings, thisRemoteId, pwImageID, callStatus)
+            end
+        end
+        
+        
+        --LrDialogs.message("Delete Album","Special Collection - no Piwigo album to delete.", "warning")
+        
+        return true
+    end
+
     local metaData = {
         catToDelete = catToDelete,
         publishService = publishService
     }
     if utils.nilOrEmpty(catToDelete) then
-        callStatus.statusMsg = "This collection has no associated Piwigo album to delete."
+         LrDialogs.message("Delete Album", "This collection has no associated Piwigo album to delete.", "warning")
     else
-        callStatus = PiwigoAPI.pwCategoriesDelete(publishSettings, info, metaData, callStatus)
+        rv = PiwigoAPI.pwCategoriesDelete(publishSettings, info, metaData, callStatus)
     end
-
-    if not callStatus.status then
-        LrDialogs.message(
-            "Delete Album",
-            callStatus.statusMsg,
-            "warning"
-        )
-    end
+    return true
 
 end
