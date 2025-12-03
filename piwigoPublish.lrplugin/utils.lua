@@ -313,8 +313,7 @@ end
 -- *************************************************
 function  utils.tagsToIds(pwTagTable, tagString)
     -- convert tagString to list of assoiciated tag ids via lookup on pwTagTable (tag table returned from pwg.tags.getList)
-    log:info("utils.tagsToIds")
-    log:info("tagString" .. tagString)
+   
     local tagIdList = ""
     local missingTags = {}
     local tagTable = utils.stringtoTable(tagString, ",")
@@ -337,7 +336,7 @@ function  utils.tagsToIds(pwTagTable, tagString)
         -- remove trailing , if present
         tagIdList = string.sub(tagIdList,1,-2)
     end
-    log:info("tagIDList :" .. tagIdList .. ", missing tags :" .. utils.serialiseVar(missingTags))
+
     return tagIdList, missingTags
 end
 

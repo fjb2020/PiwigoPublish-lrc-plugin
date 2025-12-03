@@ -1511,7 +1511,6 @@ function PiwigoAPI.createTags(propertyTable, missingTags)
     -- create a Piwigo tag for each entry in missingTags using pwg.tags.add   
     -- return comma speparated list of created id
     -- update propertyTable.allTags
-    log:info("PiwigoAPI.createTags missingTags\n" .. utils.serialiseVar(missingTags))
 
     local rv
     local createdTagIds = {}

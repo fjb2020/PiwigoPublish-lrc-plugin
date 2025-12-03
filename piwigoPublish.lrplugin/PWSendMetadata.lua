@@ -101,10 +101,7 @@ local function SendMetadata()
         local lrTime = lrPhoto:getRawMetadata("dateTimeOriginal") 
         metaData.dateCreated = LrDate.timeToUserFormat(lrTime, "%Y-%m-%d %H:%M:%S")
         metaData.Remoteid = remoteId
-
-        -- keywords
         metaData.tagString = utils.BuildTagString(publishSettings, lrPhoto)
-
         callStatus = PiwigoAPI.updateMetadata(publishSettings,lrPhoto,metaData)
         if not callStatus.status then
             LrDialogs.message("Unable to set metadata for uploaded photo - " .. callStatus.statusMsg)
