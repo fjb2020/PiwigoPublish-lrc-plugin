@@ -10,6 +10,18 @@ A Lightroom Classic plugin which publishes images to a Piwigo host via the Piwig
 * Images added to the Publish Service are published to the corresponding album on Piwigo. Metadata and keywords are transferred, respecting rules configured in the Publishing Manager for this service.
 * Special collections can be created which allow images to be published to Piwigo albums that also have sub-albums. See details in the notes on the relationship between Piwigo Albums and LrC Publish Services below.
 * Set Piwigo album cover from an image in the Published Collection
+* Metadata and keywords are exported directly to Piwigo regardless of exif/iptc settings - as part of the publish process along with the photo, or separately via a menu on the Library -> Plug-in Extras menu - which sends the metadata without re-sending the photo.
+  * the following fields are set : 
+    * author from Lrc Creator,
+    * name from LrC Title,
+    * comment from LrC Caption,
+    * date_creation from LrC Date Time Original,
+  * Keywords are handled as follows: 
+    * The Include on Export attribute set on individual keywords is respected.
+    * Flags for Include Full Keyword Hierarchy and Include Keyword Synonyms can be set in the LrC Publishing Manager (the equivalent flags set in the LrC Keyword Tag editor are not visible to plugins so can't be used)
+    * New keywords are created if not present in the Piwigo keywords list
+    * Tag comparison between LrC and Piwigo is not case sensitive - so for example 'This Is A Keyword' and 'this is a keyword' are treated as the same when sending keywords to Piwigo.
+  * GPS location data is only sent via exif so users of the OpenStreetMap plugin need to ensure that location info is included in the Metadata settings on the LrC Publishing Manager
 * Changes to images which trigger a re-publish will overwrite the previously published Piwigo image.
 * Images removed from the Publish Service are removed from corresponding album on Piwigo
 * Moving a Published Collection under a different Published Collection Set is reflected in the associated Piwigo albums
@@ -25,8 +37,7 @@ A Lightroom Classic plugin which publishes images to a Piwigo host via the Piwig
 * Metadata Check - check metadata on Piwigo matches Lrc (Title, Caption, GPS, Creator)
 
 ## The following functionality is planned:
-* Keyword Rules - customisation of how LrC keywords are exported to Piwigo
-* Re-Sync metadata for a photo
+
 * Import collection/set/image structure from another publish service
     * if remoteIds / URLs are present these will be copied. Useful to copy another publish service where a Piwigo host is the target without having to clear the existing Piwigo albums prior to re-publishing.
 * Localisation for different languages

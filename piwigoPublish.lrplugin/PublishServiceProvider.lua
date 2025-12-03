@@ -36,7 +36,7 @@ return {
 	hideSections = { 'exportLocation' }, 
 	
 
--- Behavious Settings
+-- Behaviour Settings
 	allowFileFormats = { "JPEG" , "PNG"},
 	allowColorSpaces = nil,
 	canExportVideo = false,
@@ -50,7 +50,9 @@ return {
 		{ key = 'host', default = '' },
 		{ key = "userName", default = '' },
 		{ key = "userPW", default = '' },
-
+		{ key = "KwFullHierarchy", default = true},
+		{ key = "KwSynonyms", default = true},
+		
 	},
 
 	-- metadataThatTriggersRepublish = {},

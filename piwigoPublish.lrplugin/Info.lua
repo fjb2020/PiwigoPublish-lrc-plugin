@@ -35,17 +35,23 @@ return {
     
     LrLibraryMenuItems = {
         -- Menu items for Library -> Plug In Extras -> Piwigo Publisher
+        --[[
         {
             title = "Piwigo Publisher Extra Options",
             file = "PWExtraOptions.lua",
         },
+        ]]
         {
             title = "Set Piwigo Album Cover from Selected Photo",
             file = "PWSetAlbumCover.lua",
+        },
+        {
+            title = "Send Metadata to Piwigo for Selected Photos",
+            file = "PWSendMetadata.lua",
         },
     },
     
 	LrPluginInfoProvider = 'PluginInfo.lua',
 
-    VERSION = { major=20251201, minor=9, revision=0 },
+    VERSION = { major=20251203, minor=10, revision=0 },
 }

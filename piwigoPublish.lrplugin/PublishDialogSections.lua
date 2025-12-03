@@ -202,7 +202,7 @@ local function prefsDialog (f, propertyTable)
 		bind_to_object = propertyTable,
 		f:row {
 			f:static_text {
-				title = "Applies to all Collections and Collection Sets in this Service",
+				title = "Publish Service Set Up",
 				font = "<system/bold>",
 				alignment = 'left',
 				fill_horizontal = 1,
@@ -258,56 +258,45 @@ local function prefsDialog (f, propertyTable)
 				tooltip = "Create special collections to allow images to be published to Piwigo albums with sub-albums - which is not natively supported on LrC"
 			},
    		},
-		--[[	
 		f:spacer { height = 2 },
+		f:separator { fill_horizontal = 1},
+
 		f:row {
-			f:push_button {
-				title = 'Associate Images',
-				width = share 'buttonwidth',
-				enabled = bind('Connected', propertyTable),
-				tooltip = "For each image on your Piwigo host, attempt to match an image in your LrC catalog",
-				action = function(button)
-					LrTasks.startAsyncTask(function()
-						PiwigoAPI.associateImages(propertyTable)
-					end)
-				end,
-			},
 			f:static_text {
-				title = "Associate images from Piwigo host with images in LrC Catalog",
+				title = "Settings for Transferring Metadata to Piwigo",
+				font = "<system/bold>",
 				alignment = 'left',
-            	-- width = share 'labelWidth',
-				width_in_chars = 50,
-				tooltip = "For each image on your Piwigo host, attempt to match an image in your LrC catalog",
+				fill_horizontal = 1,
 			},
 		},
 		f:spacer { height = 2 },
 		f:row {
-			f:push_button {
-				title = 'Check Images',
-				width = share 'buttonwidth',
-				enabled = bind('Connected', propertyTable),
-				tooltip = "Check for missing images",
-				action = function(button)
-					LrTasks.startAsyncTask(function()
-						PiwigoAPI.checkImages(propertyTable)
-					end)
-				end,
-			},
 			f:static_text {
-				title = "Associate images from Piwigo host with images in LrC Catalog",
+				title = "",
 				alignment = 'left',
-            	-- width = share 'labelWidth',
-				width_in_chars = 50,
-				tooltip = "For each image on your Piwigo host, attempt to match an image in your LrC catalog",
+				width_in_chars = 7,
 			},
+			f:checkbox {
+				title = "Include Full Keyword Hierarchy",
+				tooltip = "If checked, all keywords in a keyword hierarchy will be sent to Piwigo",
+				value = bind 'KwFullHierarchy',
+			}
+
 		},
+		f:spacer { height = 2 },
+		f:row {
+			f:static_text {
+				title = "",
+				alignment = 'left',
+				width_in_chars = 7,
+			},
+			f:checkbox {
+				title = "Include Keyword Synonyms",
+				tooltip = "If checked, keyword synonyms will be sent to Piwigo",
+				value = bind 'KwSynonyms',
+			}
 
-		]]	
-
-
-
-
-
+		},
 	}
 end
 --

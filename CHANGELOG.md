@@ -1,4 +1,10 @@
 # Changelog
+## [20251203.10] - 2025-12-03
+### Added
+- Metadata and keywords are sent directly to Piwigo without relying on exif/iptc
+  - as part of a publish process or via a seperate menu option so a re-publish of a photo isn't required to change metadata.
+  - Keyword synonyms and full keyword hierarchy can optionally be included
+  - Include on Export option in LrC Keyword Tag editor is respected
 
 ## [20251201.9] - 2025-12-01
 ### Added

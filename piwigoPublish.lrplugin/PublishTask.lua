@@ -122,15 +122,27 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
             metaData.Title = lrPhoto:getFormattedMetadata("title") or ""
             metaData.Caption = lrPhoto:getFormattedMetadata("caption") or ""
             metaData.fileName = lrPhoto:getFormattedMetadata("fileName") or ""
+            local lrTime = lrPhoto:getRawMetadata("dateTimeOriginal") 
+            metaData.dateCreated = LrDate.timeToUserFormat(lrTime, "%Y-%m-%d %H:%M:%S")
             metaData.Remoteid = remoteId
 
+            metaData.tagString = utils.BuildTagString(propertyTable, lrPhoto)
             -- do the upload
-            callStatus = PiwigoAPI.updateGallery(propertyTable, filePath ,metaData, callStatus)
-
+            callStatus = PiwigoAPI.updateGallery(propertyTable, filePath ,metaData)
+            -- check status and complete rendition
             if callStatus.status then
                 rendition:recordPublishedPhotoId(callStatus.remoteid or "")
                 rendition:recordPublishedPhotoUrl(callStatus.remoteurl or "")
                 rendition:renditionIsDone(true)
+         
+            -- photo was uploaded with keywords included, but existing keywords aren't replaced by this process,
+            -- so force a metadata update using pwg.images.setInfo with single_value_mode set to "replace" to force old metadata/keywords to be replaced
+                metaData.Remoteid = callStatus.remoteid
+                callStatus = PiwigoAPI.updateMetadata(propertyTable,lrPhoto,metaData)
+                if not callStatus.status then
+                    LrDialogs.message("Unable to set metadata for uploaded photo - " .. callStatus.statusMsg)
+                end
+
             else
                 rendition:uploadFailed(callStatus.message or "Upload failed")
             end
@@ -142,11 +154,9 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
     end
     progressScope:done()
     PiwigoBusy = false
-    
     -- Check if republishRequested
-
     if requestRepub then
-        LrDialogs.message("*** Missing Piwigo album ***",  "Please rePublish all photos in " .. albumName)
+        LrDialogs.message("*** Missing Piwigo Album Recreated ***",  "Please rePublish all photos in " .. albumName)
         --[[
         ToDo
         -- trigger republish of all photos in this album - missing Piwigo Album was created

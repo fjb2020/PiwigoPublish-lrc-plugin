@@ -261,19 +261,14 @@ function utils.checkKw(thisPhoto, searchKw)
     -- searchKw may be hierarchical - so split into each level
     local searchKwTable = utils.tagParse(searchKw)
     local searchKwLevels = #searchKwTable
-    --log:info("Looking for " .. searchKw .. " - " .. searchKwLevels .. " levels - " .. utils.serialiseVar(searchKwTable))
-
     local foundKW = nil -- return the keyword we find in this variable
     local stopSearch = false
     for ii, thisKeyword in ipairs(thisPhoto:getRawMetadata("keywords")) do
-
         -- thisKeyword is leaf node
         -- now need to build full hierarchical structure for thiskeyword
         kwHierarchy = {}
         kwHierarchy = utils.GetKWHierarchy(kwHierarchy,thisKeyword,1)
-        local thisKwLevels = #kwHierarchy
-        --log:info("Checking image kw " .. thisKeyword:getName() .. " - " ..  thisKwLevels.. " levels ")
-   
+        local thisKwLevels = #kwHierarchy 
         for kk,kwLevel in ipairs(kwHierarchy) do
             local kwLevelName = kwLevel:getName()
             --log:info("Level " .. kk .. " is " .. kwLevelName)
@@ -281,24 +276,20 @@ function utils.checkKw(thisPhoto, searchKw)
                 if kwLevelName == searchKwTable[1] then
                     -- if we're looking for hierarchical kw need to check other levels for match aswell
                     if searchKwLevels > 1 then
-                        --log:info("Multi level kw search - " .. kwLevelName )
                         if thisKwLevels >= searchKwLevels then
                             local foundHKW = true
-                            for hh = 2, searchKwLevels do
-                                --log:info("Multi level kw search at level - " .. hh .. ", " .. searchKwTable[hh] .. ", " .. kwHierarchy[kk-hh+1]:getName())
+                            for hh = 2, searchKwLevels do    
                                 if searchKwTable[hh] ~= kwHierarchy[kk-hh+1]:getName() then
                                     foundHKW = false
                                 end
                             end
                             if foundHKW then
                                 foundKW = thisKeyword
-                                --log:info("Multilevel - Found " .. foundKW:getName())
                                 stopSearch = true
                             end
                         end
                     else
                         foundKW = thisKeyword
-                        --log:info("Single Level - Found " .. foundKW:getName())
                         stopSearch = true
                     end
                 end
@@ -306,6 +297,93 @@ function utils.checkKw(thisPhoto, searchKw)
         end
     end
     return foundKW
+end
+-- *************************************************
+function utils.checkTagUnique(tag, tagTable)
+
+    for tt, thisTag in pairs(tagTable) do
+        if thisTag == tag then
+            return false
+        end
+    end
+    return true
+
+end
+
+-- *************************************************
+function  utils.tagsToIds(pwTagTable, tagString)
+    -- convert tagString to list of assoiciated tag ids via lookup on pwTagTable (tag table returned from pwg.tags.getList)
+    log:info("utils.tagsToIds")
+    log:info("tagString" .. tagString)
+    local tagIdList = ""
+    local missingTags = {}
+    local tagTable = utils.stringtoTable(tagString, ",")
+    
+    for _, thisTag in pairs(tagTable) do
+        local tagId = ""
+        local foundTag = false
+        for _, pwTag in pairs(pwTagTable) do
+            if thisTag:lower() == pwTag.name_raw:lower() then
+                -- compare all lowercase to avoid issues with case mismatches leading to mistaken attempts to create missing tags
+                tagIdList = tagIdList .. pwTag.id .. ","
+                foundTag = true
+            end
+        end
+        if not(foundTag) then
+            table.insert(missingTags, thisTag)
+        end
+    end
+    if string.sub(tagIdList,-1) == "," then
+        -- remove trailing , if present
+        tagIdList = string.sub(tagIdList,1,-2)
+    end
+    log:info("tagIDList :" .. tagIdList .. ", missing tags :" .. utils.serialiseVar(missingTags))
+    return tagIdList, missingTags
+end
+
+-- *************************************************
+function utils.BuildTagString(propertyTable, lrPhoto)
+    local tagString = ""
+    local tagTable = {}
+    for ii, thisKeyword in ipairs(lrPhoto:getRawMetadata("keywords")) do
+        local kwHierarchy = {}
+        kwHierarchy = utils.GetKWHierarchy(kwHierarchy,thisKeyword,1)
+        for kk,kwLevel in ipairs(kwHierarchy) do
+            local kwAtts = kwLevel:getAttributes()
+            if kwAtts.includeOnExport then
+                local kwLevelName = kwLevel:getName()
+                local kwLevelSyn = kwLevel:getSynonyms()
+                if kk > 1 then
+                    if propertyTable.KwFullHierarchy then
+                        if utils.checkTagUnique(kwLevelName, tagTable) then
+                            table.insert(tagTable, kwLevelName)
+                        end
+                        if propertyTable.KwSynonyms then
+                            for ss, syn in pairs(kwLevelSyn) do
+                                if utils.checkTagUnique(syn, tagTable) then
+                                    table.insert(tagTable, syn)
+                                end
+                            end
+                        end
+                    end
+                else
+                    if utils.checkTagUnique(kwLevelName, tagTable) then
+                        table.insert(tagTable, kwLevelName)
+                    end
+                    if propertyTable.KwSynonyms then
+                        for ss, syn in pairs(kwLevelSyn) do
+                            if utils.checkTagUnique(syn, tagTable) then
+                                table.insert(tagTable, syn)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    tagString = utils.tabletoString(tagTable, ",")
+    return tagString
+
 end
 
 -- *************************************************

@@ -217,6 +217,27 @@ local function pwGetSessionStatus( propertyTable)
 end 
 
 -- *************************************************
+function PiwigoAPI.checkAdmin (propertyTable)
+    local rv
+    local callStatus = {}
+    callStatus.status = false
+        -- check connection to piwigo
+    if not (propertyTable.Connected) then
+        rv = PiwigoAPI.login(propertyTable)
+        if not rv then
+            callStatus.statusMsg =  'PiwigoAPI:updateMetadata - cannot connect to piwigo'
+            return callStatus
+        end
+    end
+    
+    -- check role is admin level
+    if propertyTable.userStatus == "webmaster" then
+        callStatus.status = true
+      end
+    return callStatus
+end
+
+-- *************************************************
 local function buildCatHierarchy(allCats)
     
     -- Step 1: Build a lookup table by id
@@ -1020,10 +1041,10 @@ function PiwigoAPI.checkPhoto(propertyTable, pwImageID)
 end
 
 -- *************************************************
-function PiwigoAPI.updateGallery(propertyTable, exportFilename, metaData, callStatus)
+function PiwigoAPI.updateGallery(propertyTable, exportFilename, metaData)
     -- update gallery with image via pwg.images.addSimple
 
-
+    local callStatus = {}
     callStatus.status = false
 
     local params = {
@@ -1033,6 +1054,12 @@ function PiwigoAPI.updateGallery(propertyTable, exportFilename, metaData, callSt
         { name  = "name", value = metaData.Title },
         { name  = "comment", value = metaData.Caption}
     }
+    -- keywords
+    if metaData.tagString and metaData.tagString ~= "" then
+        table.insert(params,
+        { name  = "tags", value = metaData.tagString})
+    end
+
     if metaData.Remoteid ~= "" then
         -- check if remote photo exists and ignore parameter if not
         log:info("PiwigoAPI.updateGallery - checking for existing photo with remoteid " .. metaData.Remoteid)  
@@ -1058,6 +1085,8 @@ function PiwigoAPI.updateGallery(propertyTable, exportFilename, metaData, callSt
                 filePath    = exportFilename,                       
                 fileName    = LrPathUtils.leafName(exportFilename), 
                 contentType = contentType,})
+
+
 
     local uploadSuccess = false
 -- Build multipart POST request to pwg.images.addSimple
@@ -1122,13 +1151,95 @@ function PiwigoAPI.updateGallery(propertyTable, exportFilename, metaData, callSt
             status = httpHeaders.status
         end
         LrDialogs.message("Cannot upload - " .. metaData.fileName .. " to Piwigo - " .. status, statusDes)
+        callStatus.statusMsg = "Cannot upload - " .. metaData.fileName .. " to Piwigo - " .. status .. ", " .. statusDes
     end
-
     return callStatus
 end
 
+-- *************************************************
+function PiwigoAPI.updateMetadata(propertyTable,lrPhoto,metaData)
+    -- update metadata of photo on Piwigo
+    local callStatus = {}
+    callStatus.status = false
+    local rv
+    -- check connection to piwigo
+    if not (propertyTable.Connected) then
+        rv = PiwigoAPI.login(propertyTable)
+        if not rv then
+            callStatus.statusMsg =  'PiwigoAPI:updateMetadata - cannot connect to piwigo'
+            return callStatus
+        end
+    end
+    -- check role is admin level
+    if propertyTable.userStatus ~= "webmaster" then
+        callStatus.statusMsg = "User needs webmaster role on piwigo gallery at " .. propertyTable.host .. " to update metadata"
+        return callStatus
+    end
+
+    if metaData.Remoteid ~= "" then
+        -- check if remote photo exists and ignore parameter if not
+        log:info("PiwigoAPI.updateMetadata - checking for existing photo with remoteid " .. metaData.Remoteid)  
+        local rtnStatus = PiwigoAPI.checkPhoto(propertyTable, metaData.Remoteid)
+        if not rtnStatus.status then
+            callStatus.statusMsg = "PiwigoAPI.updateMetadata - cannot locate image " ..  metaData.Remoteid .. " on Piwigo - cannot update metadata"
+            return callStatus
+        end
+    else
+        callStatus.statusMsg = "PiwigoAPI.updateMetadata - missing Piwigo image ID - cannot update metadata"
+        return callStatus
+    end
+
+    local params = {
+        { name = "method", value = "pwg.images.setInfo" },
+        { name = "image_id", value = tostring(metaData.Remoteid)},
+        { name = "author", value = metaData.Creator},
+        { name = "name", value = metaData.Title },
+        { name = "comment", value = metaData.Caption},
+        { name = "date_creation", value = metaData.dateCreated},
+        { name = "single_value_mode", value = "replace"}, -- force metadata to be replaced rather than appended 
+        { name = "multiple_value_mode", value = "replace"}, -- force tags to be replaced rather than appended 
+        { name = "pwg_token", value = propertyTable.token}
+    }
+    -- keywords
+    if metaData.tagString and metaData.tagString ~= "" then
+        -- convert tagString to list of tagIDS
+        if not(propertyTable.tagTable) then
+            -- get list of all tagIDs if not already available
+            rv, propertyTable.tagTable = PiwigoAPI.getTagList(propertyTable)
+            if not rv then
+                callStatus.statusMsg =  'PiwigoAPI:updateMetadata - cannot get taglist from Piwigo'
+                return callStatus
+            end
+        end
+        local tagIdList, missingTags = utils.tagsToIds(propertyTable.tagTable, metaData.tagString)
+
+        if #missingTags > 0 then
+            -- need to create tags for missingTags
+            local rv, newTags = PiwigoAPI.createTags(propertyTable, missingTags)
+            if rv then
+                -- add new tags to image's tag id list
+                tagIdList = tagIdList .. "," .. utils.tabletoString(newTags,",")
+            end
+        end
+
+        if tagIdList and tagIdList ~= "" then
+            table.insert(params, { name  = "tag_ids", value = tagIdList})
+        end
+    end
+
+    -- now update Piwigo
+
+    local postResponse = PiwigoAPI.httpPostMultiPart(propertyTable, params)
+
+    if not postResponse.status then
+        callStatus.statusMsg = "Unable to set metadata - " .. postResponse.statusMsg
+        return callStatus
+    end
+    callStatus.status = true
+    return callStatus
 
 
+end
 -- *************************************************
 function PiwigoAPI.deletePhoto(propertyTable, pwCatID, pwImageID, callStatus)
 
@@ -1359,13 +1470,102 @@ function PiwigoAPI.setAlbumCover(publishService)
     return true
 end
 
+-- *************************************************
+function PiwigoAPI.getTagList(propertyTable)
+    -- return table of all tags on Piwigo
+
+    local rv
+    -- check connection to piwigo
+    if not (propertyTable.Connected) then
+        rv = PiwigoAPI.login(propertyTable)
+        if not rv then
+            LrDialogs.message("PiwigoAPI.getTagList - cannot connect to piwigo")
+            return false
+        end
+    end
+    local Params = {
+        --{ name = "method", value = "pwg.tags.getList"},
+        { name = "method", value = "pwg.tags.getAdminList"},
+    }
+    -- build headers to include cookies from pwConnect call
+    local headers = {}
+    if propertyTable.cookieHeader ~= nil then
+        headers = { ["Cookie"] = propertyTable.cookieHeader }
+    end
+    local getResponse = httpGet(propertyTable.pwurl, Params, headers)
+    if getResponse.errorMessage or (not getResponse.response) then
+        LrDialogs.message("Cannot get tag list from Piwigo - ", (getResponse.errorMessage or "Unknown error"))
+        return false
+    end
+    if getResponse.status == "ok" then
+        local allTags = getResponse.response.result.tags
+        return true, allTags
+    else
+        LrDialogs.message("Cannot get tag list from Piwigo - ", (getResponse.errorMessage or "Unknown error"))
+        return false
+    end
+end
+
+-- *************************************************
+function PiwigoAPI.createTags(propertyTable, missingTags)
+    -- create a Piwigo tag for each entry in missingTags using pwg.tags.add   
+    -- return comma speparated list of created id
+    -- update propertyTable.allTags
+    log:info("PiwigoAPI.createTags missingTags\n" .. utils.serialiseVar(missingTags))
+
+    local rv
+    local createdTagIds = {}
+    if #missingTags == 0 then
+        return false, createdTagIds
+    end
+    local callStatus = PiwigoAPI.checkAdmin(propertyTable)
+    if not callStatus.status then
+        callStatus.statusMsg = "User needs webmaster role on piwigo gallery at " .. propertyTable.host .. " to add tags"
+        return false, createdTagIds
+    end
+    
+    for _, tagString in pairs(missingTags) do
+        
+        local Params = {
+            { name = "method", value = "pwg.tags.add"},
+            { name = "name", value = tagString}
+        }
+
+        -- build headers to include cookies from pwConnect call
+        local headers = {}
+        if propertyTable.cookieHeader ~= nil then
+            headers = { ["Cookie"] = propertyTable.cookieHeader }
+        end
+        local getResponse = httpGet(propertyTable.pwurl, Params, headers)
+        if getResponse.errorMessage or (not getResponse.response) then
+            LrDialogs.message("Cannot add tag " .. tagString .. " to Piwigo - ", (getResponse.errorMessage or "Unknown error"))
+        else
+            if getResponse.status == "ok" then
+                local tagID = getResponse.response.result.id
+                table.insert(createdTagIds, tagID)
+            else
+                LrDialogs.message("Cannot add tag " .. tagString .. " to Piwigo - ", (getResponse.errorMessage or "Unknown error"))
+            end
+        end
+    end
+
+    -- refresh cached tag list
+    rv, propertyTable.tagTable = PiwigoAPI.getTagList(propertyTable)
+
+    return true, createdTagIds
+
+end
+
+
+
 
 -- *************************************************
 function PiwigoAPI.httpPostMultiPart(propertyTable, params)
 -- generic function to call LrHttp.PostMultiPart 
     -- LrHttp.postMultipart( url, content, headers, timeout, callbackFn, suppressFormData )
     local postResponse = {}
-
+    local postHeaders = {}
+    log:info("PiwigoAPI.httpPostMultiPart - params\n" .. utils.serialiseVar(params))
     local httpResponse, httpHeaders = LrHttp.postMultipart(
         propertyTable.pwurl,
         params,
@@ -1373,16 +1573,22 @@ function PiwigoAPI.httpPostMultiPart(propertyTable, params)
             headers = { field = "Cookie", value = propertyTable.cookies }
         }
     )
-    log:info("PiwigoAPI.deletePhoto - httpResponse \n" .. utils.serialiseVar(httpResponse))
-    log:info("PiwigoAPI.deletePhoto - httpHeaders \n" .. utils.serialiseVar(httpHeaders))
+    log:info("PiwigoAPI.httpPostMultiPart - httpResponse \n" .. utils.serialiseVar(httpResponse))
+    log:info("PiwigoAPI.httpPostMultiPart - httpHeaders \n" .. utils.serialiseVar(httpHeaders))
  
     local body
     if httpResponse then 
         body = JSON:decode(httpResponse)
     end
+    if httpHeaders then
+        postHeaders.status = httpHeaders.status
+        postHeaders.statusDesc = httpHeaders.statusDes or httpHeaders.statusDesc
+        
+    end
     if not body then
         postResponse.status = false
-        postResponse.statusMsg = "no body returned"
+        postResponse.statusMsg = postHeaders.status .. " - " .. postHeaders.statusDesc
+        return postResponse
     end
     if httpHeaders.status == 201 or httpHeaders.status == 200 then
         if body.stat == "ok" then
@@ -1397,10 +1603,7 @@ function PiwigoAPI.httpPostMultiPart(propertyTable, params)
         postResponse.statusMsg = body.message or ""
     end
     return postResponse
-
-
 end
-
 
 -- *************************************************
 function PiwigoAPI.createHeaders(propertyTable)
