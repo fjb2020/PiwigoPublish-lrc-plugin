@@ -1,5 +1,8 @@
 # Changelog
-## [20251204.11] - 2025-12-03
+## [20251216.12] - 2025-12-16
+- Improve handling of Piwigo keywords
+
+## [20251204.11] - 2025-12-04
 ### Fixed #7 Adding keywords to a photo directly via Piwigo API intermittently generates error 1003 Keyword already exists
 - 
 

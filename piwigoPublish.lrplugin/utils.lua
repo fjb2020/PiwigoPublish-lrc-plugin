@@ -53,6 +53,7 @@ end
 
 -- *************************************************
 function utils.uuid()
+    -- create uuid in form xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
     local template ='xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
     return string.gsub(template, '[xy]', function (c)
         local v = (c == 'x') and math.random(0, 0xf) or math.random(8, 0xb)
@@ -300,6 +301,7 @@ function utils.checkKw(thisPhoto, searchKw)
 end
 -- *************************************************
 function utils.checkTagUnique(tag, tagTable)
+    -- look for string (tag) in table of strings(tags) and return true if found
 
     for tt, thisTag in pairs(tagTable) do
         if thisTag == tag then
@@ -319,7 +321,6 @@ function  utils.tagsToIds(pwTagTable, tagString)
     local tagTable = utils.stringtoTable(tagString, ",")
     
     for _, thisTag in pairs(tagTable) do
-        log:info("utils.tagsToIds - looking for " .. thisTag)
         local tagId = ""
         local foundTag = false
         for _, pwTag in pairs(pwTagTable) do
@@ -459,8 +460,7 @@ end
 
 -- *************************************************
 function utils.recursivePubCollectionSearchByRemoteID(collNode, findID)
--- Recursively search for a published collection or published collection set
--- matching a given remoteId (string or number)
+-- Recursively search for a published collection or published collection set matching a given remoteId (string or number)
 
     -- Check this collNode if it has a remote ID (only if collNode is a collection or set)
     if collNode:type() == 'LrPublishedCollection' or collNode:type() == 'LrPublishedCollectionSet' then
@@ -503,6 +503,7 @@ end
 
 -- *************************************************
 function utils.findPublishNodeByName(service, name)
+    -- call utils.recursiveSearch(service, normaliseId(name))
     if not service or not name then 
         return nil 
     end
@@ -519,6 +520,7 @@ end
 
 -- *************************************************
 function utils.nilOrEmpty(val)
+-- check if val is nil or empty
 
     if val == nil then
         return true
@@ -540,6 +542,8 @@ end
 -- http utiils
 -- *************************************************
 function utils.urlEncode(str)
+    -- urlencode a string
+
     if str then
         str = string.gsub(str, "\n", "\r\n")
         str = string.gsub(str, "([^%w _%%%-%.~])",
@@ -650,6 +654,7 @@ end
 
 -- *************************************************
 function utils.getLogfilePath()
+    -- get logfile path based on os and version
     local filename = 'PiwigoPublishPlugin.log'
     local macPath14 = LrPathUtils.getStandardFilePath('home') .. "/Library/Logs/Adobe/Lightroom/LrClassicLogs/"
     local winPath14 = LrPathUtils.getStandardFilePath('home') .. "\\AppData\\Local\\Adobe\\Lightroom\\Logs\\LrClassicLogs\\"

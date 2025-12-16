@@ -620,6 +620,14 @@ function PiwigoAPI.pwConnect(propertyTable)
     -- successful connection, now get user role and token via pwg.session.getStatus
     local rv = pwGetSessionStatus(propertyTable)
 
+    -- get list of all tagIDs
+    rv, propertyTable.tagTable = PiwigoAPI.getTagList(propertyTable)
+    if not rv then
+        LrDialogs.message('PiwigoAPI.pwConnect - cannot get taglist from Piwigo')
+        return false
+    end
+
+
     return rv
 end
 
@@ -1226,9 +1234,7 @@ function PiwigoAPI.updateMetadata(propertyTable,lrPhoto,metaData)
     end
 
     -- now update Piwigo
-
     local postResponse = PiwigoAPI.httpPostMultiPart(propertyTable, params)
-
     if not postResponse.status then
         callStatus.statusMsg = "Unable to set metadata - " .. postResponse.statusMsg
         return callStatus
@@ -1553,9 +1559,6 @@ function PiwigoAPI.createTags(propertyTable, missingTags)
     return true, createdTagIds
 
 end
-
-
-
 
 -- *************************************************
 function PiwigoAPI.httpPostMultiPart(propertyTable, params)

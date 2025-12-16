@@ -127,6 +127,11 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
             metaData.Remoteid = remoteId
 
             metaData.tagString = utils.BuildTagString(propertyTable, lrPhoto)
+            -- run to build missingTags - tags that will be created on upload to Piwigo
+            -- will use this to decide whether to run build tagtable cache
+            -- means we don't have to rebuild after each uploaded photo
+            local tagIdList, missingTags = utils.tagsToIds(propertyTable.tagTable, metaData.tagString)
+
             -- do the upload
             callStatus = PiwigoAPI.updateGallery(propertyTable, filePath ,metaData)
             -- check status and complete rendition
@@ -138,8 +143,10 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
             -- photo was uploaded with keywords included, but existing keywords aren't replaced by this process,
             -- so force a metadata update using pwg.images.setInfo with single_value_mode set to "replace" to force old metadata/keywords to be replaced
                 metaData.Remoteid = callStatus.remoteid
-                -- refresh cached tag list as new tags may have been created during updateGallery
-                rv, propertyTable.tagTable = PiwigoAPI.getTagList(propertyTable)
+                if missingTags then
+                -- refresh cached tag list as new tags have been created during updateGallery
+                    rv, propertyTable.tagTable = PiwigoAPI.getTagList(propertyTable)
+                end
                 if not rv then
                     LrDialogs.message('PiwigoAPI:updateMetadata - cannot get taglist from Piwigo')
                 end
