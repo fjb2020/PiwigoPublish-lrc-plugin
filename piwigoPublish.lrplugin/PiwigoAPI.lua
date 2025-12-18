@@ -1107,15 +1107,18 @@ function PiwigoAPI.updateGallery(propertyTable, exportFilename, metaData)
         {
             headers = { field = "Cookie", value = propertyTable.cookies }
         }
-    )
+    )    
+    log:info("PiwigoAPI.updateGallery - httpHeaders\n" .. utils.serialiseVar(httpHeaders))
+    log:info("PiwigoAPI.updateGallery - httpResponse\n" .. utils.serialiseVar(httpResponse))
 
-    if httpResponse and httpResponse == "forbidden file type" then 
-        callStatus.statusMsg = "Upload failed - forbidden file type"
-        LrDialogs.message("Cannot upload " .. LrPathUtils.leafName(exportFilename) .. " to Piwigo - forbidden file type. Check file settings in Publishing Manager.")
-        return callStatus
-    end
     if httpHeaders.status == 201 or httpHeaders.status == 200 then
-        local response =  JSON:decode(httpResponse)
+        
+        local rv, response =  pcall(function() return JSON:decode(httpResponse) end)
+        if not(rv) then
+            callStatus.statusMsg = "Upload failed - Invalid JSON response - " .. tostring(httpResponse)
+            LrDialogs.message("Cannot upload " .. LrPathUtils.leafName(exportFilename) .. " to Piwigo - Invalid JSON response - " .. tostring(httpResponse))
+            return callStatus
+        end
         if response.stat == "ok" then
             callStatus.remoteid = response.result.image_id
             callStatus.remoteurl = response.result.url
