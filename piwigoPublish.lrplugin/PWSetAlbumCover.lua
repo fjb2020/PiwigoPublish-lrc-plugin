@@ -50,18 +50,21 @@ local function SetAlbumCover()
     local catId = nil
     local publishSettings = nil
     for s, source in pairs(sources) do
-        if source:type() == "LrPublishedCollection" or source:type() == "LrPublishedCollectionSet" then
-            log:info("Source " .. s .. " is " .. source:getName() )
-            local thisService = source:getService()
-            local thisSettings = thisService:getPublishSettings()
-            -- is this publish service using this plugin?
-            local thisPluginId = thisService:getPluginId()
-            if thisPluginId == _PLUGIN.id then
-                useService = thisService
-                useSource = source
-                catId = source:getRemoteId()
-                publishSettings = thisSettings
-                break
+        if type(source) == "table" and source.type then
+            local srcType = source:type()
+            if srcType == "LrPublishedCollection" or srcType == "LrPublishedCollectionSet" then
+                log:info("Source " .. s .. " is " .. source:getName() )
+                local thisService = source:getService()
+                local thisSettings = thisService:getPublishSettings()
+                -- is this publish service using this plugin?
+                local thisPluginId = thisService:getPluginId()
+                if thisPluginId == _PLUGIN.id then
+                    useService = thisService
+                    useSource = source
+                    catId = source:getRemoteId()
+                    publishSettings = thisSettings
+                    break
+                end
             end
         end
     end
