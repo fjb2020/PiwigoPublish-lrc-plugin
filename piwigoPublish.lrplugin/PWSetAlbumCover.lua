@@ -84,9 +84,6 @@ local function SetAlbumCover()
         LrDialogs.message("SetAlbumCover - Can't find Piwigo album ID for remoteId for this publish collection","","warning")
         return false
     end
-    log:info("Source is " .. useSource:getName() )
-
-    log:info("useService is " .. useService:getName())
     local result = LrDialogs.confirm("Set Piwigo Album Cover","Set select photo as cover photo for " .. useSource:getName() .."?", "Ok","Cancel")
     if result ~= 'ok' then
         return false
