@@ -1,4 +1,10 @@
 # Changelog
+## [20251218.13] - 2025-12-18
+### Fixed
+- Send Metadata to Piwigo for Selected Photos crashed when photos weren't selected from a Publish Service
+- Crash when imagick failed to process an uploaded photo correctly
+
+
 ## [20251216.12] - 2025-12-16
 - Improve handling of Piwigo keywords
 
