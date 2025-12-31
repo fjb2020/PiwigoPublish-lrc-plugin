@@ -23,8 +23,19 @@
 
 local utils = {}
 
+-- *************************************************
 
+function utils.loadStrings()
+    -- Load Strings.lua for the current UI language, fallback to English
+    local uiLang = LrApplication.locale or "en"
 
+    local success, strings = pcall(require, "Resources." .. uiLang .. ".Strings")
+    if success and strings then
+        return strings
+    else
+        return require("Resources.en.Strings")
+    end
+end
 
 -- *************************************************
 function utils.serialiseVar(value, indent)
@@ -329,12 +340,18 @@ function  utils.tagsToIds(pwTagTable, tagString)
         for _, pwTag in pairs(pwTagTable) do
             local pwTagName = ""
             if pwTag.name_raw then
+                -- Piwigo v16 and above returns name_raw
                 pwTagName = pwTag.name_raw
             else
+                -- Piwigo <= v15 returns name
                 pwTagName = pwTag.name
             end
-            if thisTag:lower() == pwTagName:lower() then
-                -- compare all lowercase to avoid issues with case mismatches leading to mistaken attempts to create missing tags
+            -- need to normalise thisTag and pwTagName for comparison 
+            local n_thisTag = utils.normaliseWord(thisTag)
+            local n_pwTagName = utils.normaliseWord(pwTagName)
+            if n_thisTag == n_pwTagName then
+            --if thisTag:lower() == pwTagName:lower() then
+
                 tagIdList = tagIdList .. pwTag.id .. ","
                 foundTag = true
             end
@@ -404,6 +421,70 @@ local function normaliseId(id)
 -- Normalise IDs for consistent comparison
     if id == nil then return nil end
     return tostring(id)
+end
+
+-- *************************************************
+function utils.normaliseWord(word)
+-- Normalise Name for consistent comparison
+-- handles accents etc 
+    local accentMap = {
+        ["à"]="a", ["á"]="a", ["â"]="a", ["ã"]="a", ["ä"]="a", ["å"]="a",
+        ["À"]="a", ["Á"]="a", ["Â"]="a", ["Ã"]="a", ["Ä"]="a", ["Å"]="a",
+
+        ["è"]="e", ["é"]="e", ["ê"]="e", ["ë"]="e",
+        ["È"]="e", ["É"]="e", ["Ê"]="e", ["Ë"]="e",
+
+        ["ì"]="i", ["í"]="i", ["î"]="i", ["ï"]="i",
+        ["Ì"]="i", ["Í"]="i", ["Î"]="i", ["Ï"]="i",
+
+        ["ò"]="o", ["ó"]="o", ["ô"]="o", ["õ"]="o", ["ö"]="o",
+        ["Ò"]="o", ["Ó"]="o", ["Ô"]="o", ["Õ"]="o", ["Ö"]="o",
+
+        ["ù"]="u", ["ú"]="u", ["û"]="u", ["ü"]="u",
+        ["Ù"]="u", ["Ú"]="u", ["Û"]="u", ["Ü"]="u",
+
+        ["ý"]="y", ["ÿ"]="y",
+        ["Ý"]="y",
+
+        ["ç"]="c", ["Ç"]="c",
+        ["ñ"]="n", ["Ñ"]="n",
+
+        ["œ"]="oe", ["Œ"]="oe",
+        ["æ"]="ae", ["Æ"]="ae",
+    }
+
+    if not word or word == "" then
+        return ""
+    end
+
+    -- lowercase first
+    word = word:lower()
+
+    -- replace accented characters
+    word = word:gsub("[%z\1-\127\194-\244][\128-\191]*", function(c)
+        return accentMap[c] or c
+    end)
+
+    -- normalize whitespace
+    word = word:gsub("%s+", " ")
+    word = word:gsub("^%s+", ""):gsub("%s+$", "")
+
+    return word
+
+end
+
+-- ************************************************
+function utils.makePathKey(name)
+  -- trim
+  name = name:gsub("^%s+", ""):gsub("%s+$", "")
+
+  -- normalize internal whitespace
+  name = name:gsub("%s+", " ")
+
+  -- replace path separator with lookalike or token
+  name = name:gsub("/", "∕")  -- second / is a U+2215 division slash
+
+  return name
 end
 
 -- *************************************************

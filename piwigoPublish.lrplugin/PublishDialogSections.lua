@@ -59,7 +59,7 @@ local function connectionDialog (f, propertyTable, pwInstance)
 	local bind = LrView.bind
 	local share = LrView.share
 
-return {
+    return {
 		title = "Piwigo Host Settings",
 		bind_to_object = propertyTable,
 
@@ -242,7 +242,7 @@ local function prefsDialog (f, propertyTable)
 				--enabled = false, -- temporary disabled
 				tooltip = "Create special publish collections for publish collection sets, allowing images to be published to Piwigo albums with sub-albums",
 				action = function(button)
-					local result = LrDialogs.confirm("Create Special Collections","Are you sure you want to create Special Collections?\nExisting collections will be unaffected.","Create","Cancel")
+					local result = LrDialogs.confirm("Create Special Collections","Are you sure you want to create Special Collections?\nExisting collections may be updated and missing Piwigo albums will be created.","Create","Cancel")
 					if result == 'ok' then
 						LrTasks.startAsyncTask(function()
 							PiwigoAPI.specialCollections(propertyTable)
@@ -258,6 +258,34 @@ local function prefsDialog (f, propertyTable)
 				tooltip = "Create special collections to allow images to be published to Piwigo albums with sub-albums - which is not natively supported on LrC"
 			},
    		},
+
+		f:spacer { height = 2 },
+		f:row {
+			f:push_button {
+				title = 'Check / link Piwigo Structure',
+				width = share 'buttonwidth',
+				enabled = bind('Connected', propertyTable),
+				--enabled = false, -- temporary disabled
+				tooltip = "Check Piwigo album structure against local collection / set structure",
+				action = function(button)
+					local result = LrDialogs.confirm("Check / link Piwigo Structure","Are you sure you want to check / link Piwigo Structure?\nExisting collections will be unaffected.","Check","Cancel")
+					if result == 'ok' then
+						LrTasks.startAsyncTask(function()
+							PiwigoAPI.validatePiwigoStructure(propertyTable)
+						end)
+					end
+				end,
+			},
+        	f:static_text {
+				title = "Piwigo structure will be checked against local collection / set structure. Missing Piwigo albums will be created and links checked / updated",
+				alignment = 'left',
+            	-- width = share 'labelWidth',
+				-- width_in_chars = 50,
+				tooltip = "Piwigo structure will be checked against local collection / set structure. Missing Piwigo albums will be created and links checked / updated"
+			},
+   		},
+
+
 		f:spacer { height = 2 },
 		f:separator { fill_horizontal = 1},
 

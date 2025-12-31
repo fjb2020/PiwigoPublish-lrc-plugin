@@ -33,6 +33,7 @@ A Lightroom Classic plugin which publishes images to a Piwigo host via the Piwig
 * Multiple Publish Services connecting to different Piwigo hosts can be created.
 * Deleting a Publish Service does not delete any images or albums on the Piwigo host it was associated with.
 * Import Smart Collection Settings supported
+* Consistency Check - Option to check local collection / set structure against existing Piwigo album structure - missing Piwigo albums will be created and incorrect links between collections / sets will be updated. This option means an existing collection structure could be copied using tools such as jb Collection Tools in to the Piwigo Publisher publish service and then be updated to create a consistent working structure within the Piwigo Publisher publish service. Whilst tools such as jb Collection Tools may populate the collections with images, the images are not linked to those that may already be in the Piwigo albums and will need to be published again, likely duplicating the existing Piwigo images unless they are deleted from Piwigo prior to running the publish.
 
 ## The following functionality is under development:
 
@@ -42,7 +43,6 @@ A Lightroom Classic plugin which publishes images to a Piwigo host via the Piwig
 
 ## The following functionality is planned:
 
-* Consistency Check - check for images missing on Piwigo and update published status accordingly
 * Support for the X-PIWIGO-API header instead of Authorization when sending API keys - v16.1 and above
 * Import collection/set/image structure from another publish service
     * if remoteIds / URLs are present these will be copied. Useful to copy another publish service where a Piwigo host is the target without having to clear the existing Piwigo albums prior to re-publishing.
@@ -128,23 +128,26 @@ You should have received a copy of the GNU General Public License along with thi
 
 This plugin has been developed on an macOS platform with Apple silicon. I don't have a windows platform capable of running Lightroom Classic available so no testing at all has been carried out on a windows platform.
 
-The development environment is:
-- Apple macOS Tahoe 26.1
+The development/test environment is:
 - Lightroom Classic 15.0.1 release
+    - Apple macOS Tahoe 26.1 
+- Lightroom Classic 14.1 release 
+    - Windows 11 Pro via Parallels on Apple ARM-based processor         
 - Piwigo 15.7.0 on Ubuntu 22.04.5 LTS
 - Piwigo 16.0.0 on Ubuntu 22.04.5 LTS
+- Piwigo 16.1.0 on Ubuntu 22.04.5 LTS
 
 The plugin has now been tested with Piwigo 16.0.0, including the use of API keys. When using an API key, login credentials are as follows: instead of your username, enter the API key ID (starting with “pkid-…”), and instead of your password, enter the secret of the API key.
 
-The released version is currently at beta 0.9.4. As a beta release the code is still full of debugging messages as I've grappled with the complexities of accessing the Piwigo web service API via the LrHttp namespace with all it's idiosyncrasies. These will be tidied up, and a more consistent pattern for the various LrHttp calls is planned.
-
-However, in the meantime this plugin does what I need and hasn't corrupted either my Lightroom catalog or my Piwigo installation. If others want to try it pending a more official plugin being avaiable again I suggest the following approach:
+If others want to try it pending a more official plugin being avaiable again I suggest the following approach:
 
 1. Backup Lrc Catalog and Piwigo gallery
 2. Install and enable this plugin.
 3. Add a publish service and connect it to your Piwigo host in the Lightroom Publishing Manager
-4. Once a connection is established, the Import Albums button will activate. Click this button to import the album struction from Piwigo. You will see Collection Sets and Collections in the Publish Service corresponding to your albums in Piwigo.
-5. If you have Piwigo albums that contain both photos and sub-albums you should also run the Create Special Collections option (see above Notes on the relationship between Piwigo Albums and LrC Publish Services for details)
+4. Save the new publish service
+5. Once a connection is established, the Import Albums button will activate. Click this button to import the album struction from Piwigo. You will see Collection Sets and Collections in the Publish Service corresponding to your albums in Piwigo.
+6. If you have Piwigo albums that contain both photos and sub-albums you should also run the Create Special Collections option (see above Notes on the relationship between Piwigo Albums and LrC Publish Services for details)
+7. Alternatively, if you have access to a plugin that lets you copy / paste from other publish services, such as jb Collection Tools, then you may use this to establish collection sets and collections in the new publish sevice and then run the option Check / Link Piwigo Structure on the Lightroom Publishing Manager screen. This links the publish service to Piwigo
 6. You can then populate these collections and publish to the Piwigo host. 
 7. If you already have a different Piwigo Publish service you can copy photos from those publish service collections to this one. Clicking the Publish button will send these photos to the correspoding Piwigo album, but be aware that it will create duplicate photos if a copy is already in the Piwigo album outside of this plugin, so you may wish to clear the album prior to running the export from LrC.
 

@@ -44,7 +44,7 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
 
     -- check connection to piwigo
     if not (propertyTable.Connected) then
-        rv = PiwigoAPI.login(propertyTable, false)
+        rv = PiwigoAPI.login(propertyTable)
         if not rv then
             PiwigoBusy = false
             LrErrors.throwUserError('Publish photos to Piwigo - cannot connect to piwigo at ' .. propertyTable.host)
@@ -79,11 +79,12 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
         rv, checkCats = PiwigoAPI.pwCategoriesGet(propertyTable, albumId)
         if not rv then
             PiwigoBusy = false
-            LrErrors.throwUserError('Publish photos to Piwigo - cannot check category exists on piwigo at ' .. propertyTable.host)
+            LrErrors.throwUserError('Publish photos to Piwigo - cannot check category exists on piwigo at ' ..
+            propertyTable.host)
             return nil
         end
     end
-    if utils.nilOrEmpty(checkCats) or not(albumId) then
+    if utils.nilOrEmpty(checkCats) or not (albumId) then
         -- create missing album on piwigo (may happen if album is deleted directly on Piwigo rather than via this plugin, or if smartcollectionimport is run)
         local metaData = {}
         callStatus = {}
@@ -104,6 +105,7 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
         end
     end
 
+    local resetConnectioncount = 0
 
     local renditionParams = {
         stopIfCanceled = true,
@@ -112,7 +114,18 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
     log:info("PublishTask.processRenderedPhotos - renditionSettings\n" .. utils.serialiseVar(renditionParams))
     -- now wait for photos to be exported and then upload to Piwigo
     for i, rendition in exportContext:renditions(renditionParams) do
-     
+        -- reset connection every 75 uploads
+        resetConnectioncount = resetConnectioncount + 1
+        if resetConnectioncount > 75 then
+            resetConnectioncount = 0
+            log:info("PublishTask.processRenderedPhotos - resetting Piwigo connection after 75 uploads")
+            rv = PiwigoAPI.login(propertyTable)
+            if not rv then
+                PiwigoBusy = false
+                LrErrors.throwUserError('Publish photos to Piwigo - cannot connect to piwigo at ' .. propertyTable.host)
+                break
+            end
+        end
 
         local lrPhoto = rendition.photo
         local remoteId = rendition.publishedPhotoId or ""
@@ -246,7 +259,7 @@ function PublishTask.deletePhotosFromPublishedCollection(publishSettings, arrayO
 
     -- check connection to piwigo
     if not (publishSettings.Connected) then
-        local rv = PiwigoAPI.login(publishSettings, false)
+        local rv = PiwigoAPI.login(publishSettings)
         if not rv then
             PiwigoBusy = false
             LrErrors.throwUserError('Delete Photos from Collection - cannot connect to piwigo at ' .. publishSettings
@@ -294,6 +307,44 @@ end
 
 -- ************************************************
 function PublishTask.getCommentsFromPublishedCollection(publishSettings, arrayOfPhotoInfo, commentCallback)
+    --[[
+	for i, photoInfo in ipairs( arrayOfPhotoInfo ) do
+
+		local comments = PiwigoAPI.getComments( publishSettings, photoInfo.remoteId)
+		
+		local commentList = {}
+		
+		if comments and #comments > 0 then
+
+			for _, comment in ipairs( comments ) do
+
+				table.insert( commentList, {
+								commentId = comment.id,
+								commentText = comment.commentText,
+								dateCreated = comment.datecreate,
+								username = comment.author,
+								realname = comment.authorname,
+								url = comment.permalink
+							} )
+
+			end
+
+		end
+
+		commentCallback{ publishedPhoto = photoInfo, comments = commentList }
+
+	end
+
+]]
+end
+
+-- ************************************************
+function PublishTask.didCreateNewPublishService(publishSettings, info)
+
+end
+
+-- ************************************************
+function PublishTask.didUpdatePublishService(publishSettings, info)
 
 end
 
@@ -301,6 +352,21 @@ end
 function PublishTask.shouldDeletePublishService(publishSettings, info)
     -- TODO
     -- Add dialog with details of photos and sub collections that will be orphaned if delete goes ahead
+    log:info("PublishTask.shouldDeletePublishService")
+end
+
+-- ************************************************
+function PublishTask.willDeletePublishService(publishSettings, info)
+    -- TODO
+    -- Add dialog with details of photos and sub collections that will be orphaned if delete goes ahead
+    log:info("PublishTask.willDeletePublishService")
+end
+
+-- ************************************************
+function PublishTask.shouldDeletePublishedCollection(publishSettings, info)
+    -- TODO
+    -- Add dialog with details of photos and sub collections that will be orphaned if delete goes ahead
+    log:info("PublishTask.shouldDeletePublishedCollection")
 end
 
 -- ************************************************
@@ -317,7 +383,7 @@ end
 function PublishTask.validatePublishedCollectionName(name)
     log:info("PublishTask.validatePublishedCollectionName")
     if PiwigoBusy then
-        return false, "Piwigo is busy. Please try later."
+        return false, "Piwigo Publisher is busy. Please try later."
     end
     -- look for [ and ]
     if string.sub(name, 1, 1) == "[" or string.sub(name, -1) == "]" then
@@ -338,11 +404,6 @@ function PublishTask.getCollectionBehaviorInfo(publishSettings)
     }
 end
 
--- ************************************************
-function PublishTask.didUpdatePublishService(publishSettings, info)
-
-end
-
 -- Functions for UI Management
 -- *************************************************
 local function valueEqual(a, b)
@@ -352,7 +413,7 @@ end
 
 -- ************************************************
 function PublishTask.viewForCollectionSettings(f, publishSettings, info)
-   log:info("PublishTask.viewForCollectionSettings")
+    log:info("PublishTask.viewForCollectionSettings")
 end
 
 -- ************************************************
@@ -367,7 +428,7 @@ function PublishTask.updateCollectionSettings(publishSettings, info)
     log:info("PublishTask.updateCollectionSettings")
     if PiwigoBusy then
         -- pwigo processing another request - throw error
-        error("Piwigo is busy. Please try later.")
+        error("Piwigo Publisher is busy. Please try later.")
     end
 
     local callStatus = {
@@ -430,7 +491,7 @@ function PublishTask.updateCollectionSetSettings(publishSettings, info)
 
     if PiwigoBusy then
         -- pwigo processing another request - throw error
-        error("Piwigo is busy. Please try later.")
+        error("Piwigo Publisher is busy. Please try later.")
     end
     local callStatus = {
         status = false,
@@ -483,7 +544,7 @@ function PublishTask.reparentPublishedCollection(publishSettings, info)
     log:info("info\n" .. utils.serialiseVar(info))
     if PiwigoBusy then
         -- pwigo processing another request - throw error
-        error("Piwigo is busy. Please try later.")
+        error("Piwigo Publisher is busy. Please try later.")
     end
 
     -- check for special collection and prevent change if so
@@ -536,7 +597,7 @@ function PublishTask.renamePublishedCollection(publishSettings, info)
             callStatus.statusMsg = "no album found on Piwigo"
         else
             if PiwigoBusy then
-                callStatus.statusMsg = "Piwigo is busy. Please try later."
+                callStatus.statusMsg = "Piwigo Publisher is busy. Please try later."
             else
                 callStatus = PiwigoAPI.pwCategoriesSetinfo(publishSettings, info, callStatus)
             end
@@ -560,18 +621,13 @@ function PublishTask.renamePublishedCollection(publishSettings, info)
 end
 
 -- ************************************************
-function PublishTask.willDeletePublishService(publishSettings, info)
-
-end
-
--- ************************************************
 function PublishTask.deletePublishedCollection(publishSettings, info)
     log:info("PublishTask.deletePublishedCollection")
     log:info("info\n" .. utils.serialiseVar(info))
 
     if PiwigoBusy then
         -- pwigo processing another request - throw error
-        error("Piwigo is busy. Please try later.")
+        error("Piwigo Publisher is busy. Please try later.")
     end
 
     -- called for both collections and collectionsets

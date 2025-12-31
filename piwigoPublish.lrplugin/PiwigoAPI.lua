@@ -301,9 +301,353 @@ local function buildCategoryPath(cat, allCats)
     return path
 end
 
+-- *************************************************
+local function normalisePiwigoAlbums(piwigoTree)
+    -- build normalised view of Piwigo album tree
+    local indexByPath = {}
+    local indexById   = {}
+    -- *************************************************
+    local function visit(node, parentPath, parentId)
+        if not node.name or not node.id then
+            return
+        end
 
+        -- Album paths must be composed ONLY from normalized keys.
+        -- Raw names are for display only.
+        local key = utils.makePathKey(node.name)
+        local name = node.name
+        local path = parentPath and (parentPath .. "/" .. key) or key
 
+        local entry = {
+            id       = node.id,
+            name     = name,
+            key      = key,
+            path     = path,
+            parentId = parentId,
+            children = {},
+        }
 
+        indexByPath[path] = entry
+        indexById[node.id] = entry
+
+        if node.children then
+            for _, child in ipairs(node.children) do
+                visit(child, path, node.id)
+                table.insert(entry.children, path .. "/" .. child.name)
+            end
+        end
+    end
+    -- *************************************************
+    for _, root in ipairs(piwigoTree) do
+        visit(root, nil, nil)
+    end
+
+    return indexByPath, indexById
+end
+
+-- *************************************************
+local function normalisePublishService(publishService)
+    local indexByPath = {}
+    local indexById   = {}
+    local visit
+    local visitSet
+    local visitCollection
+    log:info("normalisePublishService - processing\n" .. utils.serialiseVar(publishService))
+    -- *************************************************
+    visit = function (container, parentPath, parentId)
+        local children = container:getChildCollectionSets()
+        local collections = container:getChildCollections()
+
+        -- Visit child collection sets first
+        for _, set in ipairs(children) do
+            visitSet(set, parentPath, parentId)
+        end
+
+        -- Then collections
+        for _, col in ipairs(collections) do
+            visitCollection(col, parentPath, parentId)
+        end
+    end
+    -- *************************************************
+    -- Forward declarations
+    visitSet = function (set, parentPath, parentId)
+        local name = set:getName()
+        local key  = utils.makePathKey(name)
+        local path = parentPath and (parentPath .. "/" .. key) or key
+
+        local entry = {
+            id       = set.localIdentifier,
+            name     = name,
+            key      = key,
+            path     = path,
+            parentId = parentId,
+            kind     = "set",
+            remoteId = set:getRemoteId(),
+            children = {},
+        }
+
+        indexByPath[path] = entry
+        indexById[entry.id] = entry
+
+        -- recurse into this set
+        visit(set, path, entry.id)
+    end
+    -- *************************************************
+    visitCollection = function(col, parentPath, parentId)
+        local name = col:getName()
+        local key  = utils.makePathKey(name)
+        local path = parentPath and (parentPath .. "/" .. key) or key
+
+        local entry = {
+            id       = col.localIdentifier,
+            name     = name,
+            key      = key,
+            path     = path,
+            parentId = parentId,
+            kind     = "collection",
+            remoteId = col:getRemoteId(),
+            children = {}, -- always empty
+        }
+
+        indexByPath[path] = entry
+        indexById[entry.id] = entry
+
+        -- attach to parent
+        if parentPath then
+            table.insert(indexByPath[parentPath].children, path)
+        end
+    end
+
+    visit(publishService, nil, nil)
+    return indexByPath, indexById
+
+end
+
+-- *************************************************
+
+local function validatePublishAgainstPiwigo(lrIndexByPath, piwigoIndexByPath)
+    local issues = {
+        missingRemote = {},      -- local collection missing on Piwigo
+        remoteIdMismatch = {},   -- remoteId != Piwigo ID
+        orphanPiwigo = {},       -- Piwigo albums missing locally
+        specialCollections = {}, -- Special collections
+    }
+
+    -- 1. Check Lightroom collections against Piwigo
+    for path, lrEntry in pairs(lrIndexByPath) do
+        if lrEntry.kind == "collection" or lrEntry.kind == "set" then
+            -- check for special collections that won't / shouldn't exist on Piwigo as a separate album
+            
+            if (string.sub(lrEntry.key, 1, 1) == "[" and string.sub(lrEntry.key, -1) == "]") or (lrEntry.key:match("^※")) then
+                -- special collection from pwigo published or piwigo export plugins
+                -- check remote id is that of parent piwgo album
+                table.insert(issues.specialCollections, {
+                    key  = lrEntry.key,
+                    path = path,
+                    id   = lrEntry.id,
+                })
+            else
+                local piwigoEntry = piwigoIndexByPath[path]
+                if not piwigoEntry then
+                    table.insert(issues.missingRemote, {
+                        path = path,
+                        kind = lrEntry.kind,
+                        id   = lrEntry.id,
+                    })
+                else
+                    -- compare remoteId
+                    local remoteId = lrEntry.remoteId
+                    local piwigoId = piwigoEntry.id
+                    if tostring(remoteId) ~= tostring(piwigoId) then
+                        table.insert(issues.remoteIdMismatch, {
+                            path        = path,
+                            kind        = lrEntry.kind,
+                            localId     = lrEntry.id,
+                            remoteId    = remoteId,
+                            piwigoId    = piwigoId,
+                        })
+                    end
+                end
+            end
+  
+        end
+    end
+
+    -- 2. Optional: detect Piwigo albums missing locally
+    for path, piwigoEntry in pairs(piwigoIndexByPath) do
+        local lrEntry = lrIndexByPath[path]
+        if (piwigoEntry.kind == nil or piwigoEntry.kind == "collection" or piwigoEntry.kind == "set")
+           and not lrEntry then
+            table.insert(issues.orphanPiwigo, {
+                path = path,
+                kind = "collection",
+                piwigoId = piwigoEntry.id,
+            })
+        end
+    end
+
+    return issues
+end
+-- *************************************************
+local function vps_fixRemoteIdMismatchesAndUpdateDets(catalog, propertyTable, publishService,lrIndexByPath, lrIndexById, pwIndexByPath,  issues)
+    -- fix mismtach between collection/set remote id and Piwigo album id  identified in issues.remoteIdMismatch
+    local fixRemote = 0
+    for _, mismatch in ipairs(issues.remoteIdMismatch) do
+        local lrEntry = lrIndexById[mismatch.localId]
+        if lrEntry then
+            local oldId = lrEntry.remoteId
+            lrEntry.remoteId = mismatch.piwigoId
+            local colOrSet = catalog:getPublishedCollectionByLocalIdentifier(mismatch.localId)
+            -- Determine parent set for setCollectionDets
+            local parentSet = nil
+
+            if lrEntry.parentId then
+                parentSet = catalog:getPublishedCollectionByLocalIdentifier(lrEntry.parentId)
+            end
+
+            -- Call PiwigoAPI to update collection details in the catalog
+            PiwigoAPI.setCollectionDets(colOrSet, catalog, propertyTable, lrEntry.name, lrEntry.remoteId, parentSet)
+
+            -- Logging
+            if not oldId or oldId == "" then
+                log:info(string.format(
+                    "Set missing remoteId and updated collection details for %s: %s -> %s",
+                    lrEntry.path, lrEntry.kind, tostring(lrEntry.remoteId)
+                ))
+            else
+                log:info(string.format(
+                    "Updated remoteId and collection details for %s: %s (old: %s, new: %s)",
+                    lrEntry.path, lrEntry.kind, tostring(oldId), tostring(lrEntry.remoteId)
+                ))
+            end
+            fixRemote = fixRemote + 1
+
+        else
+            log:warn(string.format(
+                "Cannot find Lightroom entry for localId %s (path: %s)",
+                tostring(mismatch.localId), mismatch.path
+            ))
+        end
+    end
+    return fixRemote
+end
+
+-- *************************************************
+local function vps_createMissingPiwigoAlbumsFromIssues(catalog, propertyTable, publishService, lrIndexByPath, lrIndexById, pwIndexByPath, issues)
+    --create Piwigo albums identified in issues.missingRemote
+    
+
+    local missing = issues.missingRemote
+    -- Sort paths top-down so parents are created before children
+    table.sort(missing, function(a, b)
+        return #a.path < #b.path
+    end)
+    log:info("createMissingPiwigoAlbumsFromIssues - missing\n",utils.serialiseVar(missing))
+    log:info("createMissingPiwigoAlbumsFromIssues - lrIndexByPath\n",utils.serialiseVar(lrIndexByPath))
+    log:info("createMissingPiwigoAlbumsFromIssues - lrIndexById\n",utils.serialiseVar(lrIndexById))
+    local numCreated = 0
+    local numFailed = 0
+    for _, miss in ipairs(missing) do
+        local lrEntry = lrIndexByPath[miss.path]
+        local colLocalIdentifier = miss.id
+        -- Determine parent remote ID
+        local parentRemoteId = nil
+        local parentSet = nil
+        local parentLocalIdentifier = nil
+        if lrEntry.parentId then
+            local parentEntry = lrIndexById[lrEntry.parentId]
+            if parentEntry then
+                parentRemoteId = parentEntry.remoteId
+                parentLocalIdentifier = parentEntry.id 
+                parentSet = catalog:getPublishedCollectionByLocalIdentifier(parentLocalIdentifier)
+            end
+        end
+
+        -- get publishedCollection
+        
+        local ColOrSet = catalog:getPublishedCollectionByLocalIdentifier( colLocalIdentifier  )
+        
+        --log:info("createMissingPiwigoAlbumsFromIssues - ColOrSet is " .. ColOrSet:getName() ..", a " .. ColOrSet:type())
+        -- Create album in Piwigo
+        local metaData = {}
+        local callStatus = {}
+        local albumName = lrEntry.name
+        metaData.name = albumName
+        metaData.parentCat = parentRemoteId
+        local albumId
+        local albumUrl
+
+        --log:info("createMissingPiwigoAlbumsFromIssues - creating pwAlbum " .. albumName .. " under " .. (parentRemoteId or ""))
+        callStatus = PiwigoAPI.pwCategoriesAdd(propertyTable, ColOrSet, metaData, callStatus)
+
+        if callStatus.status then
+            -- reset album id to newly created one
+            albumId = callStatus.newCatId
+            albumUrl = callStatus.albumURL
+            PiwigoAPI.setCollectionDets(ColOrSet, catalog, propertyTable, albumName, albumId, parentSet)
+            numCreated = numCreated + 1
+        else
+            log:info("createMissingPiwigoAlbumsFromIssues - unable to create pwAlbum " .. albumName .. " under " .. (parentRemoteId or ""))
+            numFailed = numFailed + 1
+        end
+     
+
+        -- Update Lightroom entry
+        lrEntry.remoteId = albumId
+
+        -- Update Piwigo index
+        pwIndexByPath[miss.path] = {
+            id       = albumId,
+            name     = lrEntry.name,
+            key      = lrEntry.key,
+            path     = miss.path,
+            parentId = lrEntry.parentId,
+            kind     = lrEntry.kind,
+            children = {},
+        }
+        -- Attach to parent in Piwigo index
+        if parentRemoteId and lrEntry.parentId then
+            local lrIndexByIdEntry = lrIndexById[lrEntry.parentId]
+            local parentPath = lrIndexByIdEntry.path
+            table.insert(pwIndexByPath[parentPath].children, miss.path)
+        end
+        log:info(string.format("Created missing Piwigo %s: %s (ID %s)",lrEntry.kind, miss.path, tostring(albumId) ))
+    end
+
+    return numCreated, numFailed
+end
+
+-- *************************************************
+local function vps_fixSpecialCollections(catalog, propertyTable, publishService, lrIndexByPath, lrIndexById, pwIndexByPath, issues)
+-- fix mismtach between collection/set remote id and Piwigo album id  identified in issues.remoteIdMismatch
+    local fixSpecial = 0
+
+    for _, specialCollection in ipairs(issues.specialCollections) do
+        local scIdentifier = specialCollection.id
+
+        local scColOrSet = catalog:getPublishedCollectionByLocalIdentifier(scIdentifier)
+
+        if scColOrSet then
+            -- if this is a special collection created by this plugin, check remote is correct
+            -- if an alloyphoto imported special collection, rename and check remote id is correct
+            -- get parent
+            local scName = scColOrSet:getName()
+            local scRemoteId = scColOrSet:getRemoteId()
+            local parentColSet = scColOrSet:getParent()
+
+            if parentColSet then
+                local parentName = parentColSet:getName()
+                local parentRemoteId = parentColSet:getRemoteId()
+                local checkName = PiwigoAPI.buildSpecialCollectionName(parentName)
+                if (checkName ~= scName) or (scRemoteId ~= parentRemoteId) then
+                    PiwigoAPI.setCollectionDets(scColOrSet, catalog, propertyTable, checkName, parentRemoteId, parentColSet)
+                    fixSpecial = fixSpecial + 1
+                end
+            end
+        end
+    end
+    return fixSpecial
+end
 
 -- *************************************************
 local function createCollection(propertyTable, node, parentNode, isLeafNode, statusData)
@@ -413,8 +757,6 @@ end
 -- G L O B A L   F U N C T I O N S
 -- *************************************************
 
-
-
 -- *************************************************
 function PiwigoAPI.fixSpecialCollectionNames(catalog, publishService, propertyTable)
     -- fix extra space in specialCollectionNames
@@ -432,6 +774,7 @@ function PiwigoAPI.fixSpecialCollectionNames(catalog, publishService, propertyTa
                 local remoteId = childCol:getRemoteId()
                 if string.sub(ccName, 1, 11) == "[ Photos in" and string.sub(ccName, -2) == " ]" then
                     -- special collection - fix name by removing space prior to ]
+                    
                     local newName = PiwigoAPI.buildSpecialCollectionName(parentName)
                     log:info("PiwigoAPI.fixSpecialCollectionNames - " .. ccName .. " fixed to " .. newName)
                     catalog:withWriteAccessDo("Set Collection Name", function()
@@ -472,13 +815,7 @@ function PiwigoAPI.createPublishCollectionSet(catalog, publishService, propertyT
     end)
     -- add remoteids and urls to collection
     PiwigoAPI.setCollectionDets(newColl, catalog, propertyTable, name, remoteId, parentSet)
-    --[[
-    catalog:withWriteAccessDo("Add Piwigo details to collection", function()
-        newColl:setRemoteId( remoteId)
-        newColl:setRemoteUrl( propertyTable.host .. "/index.php?/category/" .. remoteId )
-        newColl:setName( name )
-    end)
-    ]]
+
     return newColl
 end
 
@@ -492,14 +829,75 @@ function PiwigoAPI.createPublishCollection(catalog, publishService, propertyTabl
     end)
     -- add remoteids and urls to collection
     PiwigoAPI.setCollectionDets(newColl, catalog, propertyTable, name, remoteId, parentSet)
-    --[[
-    catalog:withWriteAccessDo("Add Piwigo details to collection", function()
-        newColl:setRemoteId( remoteId)
-        newColl:setRemoteUrl( propertyTable.host .. "/index.php?/category/" .. remoteId )
-        newColl:setName( name )
-    end)
-    ]]
+
     return newColl
+end
+
+-- *************************************************
+function PiwigoAPI.validatePiwigoStructure(propertyTable)
+    -- function to check remote Piwigo structure is consistent with local collection / set structure
+    -- does each collection / set have a corresponding Piwigo album
+    -- are collection / set remooteIds correct
+
+    -- will create Piwigo albums if missing
+    -- will add remoteIds to local collection / sets if missing
+    -- will not create any new collection / sets
+    
+    local rv, allCats
+    local catalog = LrApplication.activeCatalog()
+    rv = PiwigoAPI.getPublishService(propertyTable)
+    if not rv then
+        LrErrors.throwUserError("Error in validatePiwigoStructure: Cannot find Piwigo publish service for host/user.")
+        return false
+    end
+    local publishService = propertyTable._service
+    if not publishService then
+        LrErrors.throwUserError("Error in validatePiwigoStructure: Piwigo publish service is nil.")
+        return false
+    end
+
+    -- get all categories from Piwigo
+   
+    rv, allCats = PiwigoAPI.pwCategoriesGet(propertyTable, "")
+    if not rv then
+        utils.handleError('PiwigoAPI:validatePiwigoStructure - cannot get categories from piwigo',
+            "Error: Cannot get categories from Piwigo server.")
+        return
+    end
+    if utils.nilOrEmpty(allCats) then
+        utils.handleError('PiwigoAPI:validatePiwigoStructure - no categories found in piwigo',
+            "Error: No categories found in Piwigo server.")
+        return
+    end
+    -- hierarchical table of categories
+    local catHierarchy = buildCatHierarchy(allCats)
+
+    -- build normalised views of Piwigo Albums and local collection / sets
+    local pwIndexByPath, pwIndexById = normalisePiwigoAlbums(catHierarchy)
+    --log:info("PiwigoAPI.validatePiwigoStructure - pwIndexByPath\n" .. utils.serialiseVar(pwIndexByPath))
+    --log:info("PiwigoAPI.validatePiwigoStructure - pwIndexById\n" .. utils.serialiseVar(pwIndexById))
+
+    local lrIndexByPath, lrIndexById
+    catalog:withReadAccessDo(function()
+        lrIndexByPath, lrIndexById = normalisePublishService(publishService)
+    end)
+    --log:info("PiwigoAPI.validatePiwigoStructure - lrIndexByPath\n" .. utils.serialiseVar(lrIndexByPath))
+    --log:info("PiwigoAPI.validatePiwigoStructure - lrIndexById\n" .. utils.serialiseVar(lrIndexById))
+    
+    -- compare tables of album paths and ceate table of issues e.g.
+    local issues = validatePublishAgainstPiwigo(lrIndexByPath, pwIndexByPath)
+    log:info("PiwigoAPI.validatePiwigoStructure - issues\n" .. utils.serialiseVar(issues))
+
+    -- now process any issues
+ 
+    local numCreated, numFailed =  vps_createMissingPiwigoAlbumsFromIssues(catalog, propertyTable, publishService, lrIndexByPath, lrIndexById, pwIndexByPath, issues)
+    local numFixed = vps_fixRemoteIdMismatchesAndUpdateDets(catalog, propertyTable, publishService,lrIndexByPath, lrIndexById, pwIndexByPath,  issues)
+    local numSpecial = vps_fixSpecialCollections(catalog, propertyTable, publishService, lrIndexByPath, lrIndexById, pwIndexByPath, issues)
+    LrDialogs.message(
+        "Check Piwigo Structure", 
+        string.format("Albums created on Piwigo: %s, Piwigo links updated: %s, Albums unable to create: %s (check log file for details)",numCreated,numFixed,numFailed
+        ))
+
 end
 
 -- *************************************************
@@ -784,8 +1182,6 @@ function PiwigoAPI.importAlbums(propertyTable)
     -- hierarchical table of categories
     local catHierarchy = buildCatHierarchy(allCats)
 
-    -- in Piwigo an album can have photos as well as sub-albums. In LrC, a collectionset does not have photos
-    -- ToDo - deal with this via creating a collection within each collection set for photos at this level in Piwigo - so called super-album
     local statusData = {
         existing = 0,
         collectionSets = 0,

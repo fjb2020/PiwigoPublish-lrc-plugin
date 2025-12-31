@@ -55,9 +55,17 @@ return {
         --{ key = "scNameFix",default = false}
 		
 	},
-
-	-- metadataThatTriggersRepublish = {},
-	-- canExportToTemporaryLocation = true 
+--[[
+	metadataThatTriggersRepublish = {
+		default = false,
+		title = true,
+		caption = true,
+		keywords = true,
+		gps = true,
+		dateCreated = true,
+    },
+]]
+    -- canExportToTemporaryLocation = true 
 	-- canExportToTemporaryLocation = true 
 	-- showSections = { 'fileNaming', 'fileSettings', etc... }
 
