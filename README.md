@@ -126,7 +126,7 @@ You should have received a copy of the GNU General Public License along with thi
 
 ## Development and Testing
 
-This plugin has been developed on an macOS platform with Apple silicon. I don't have a windows platform capable of running Lightroom Classic available so no testing at all has been carried out on a windows platform.
+This plugin has been developed on an macOS platform with Apple silicon. 
 
 The development/test environment is:
 - Lightroom Classic 15.0.1 release
@@ -150,4 +150,3 @@ If others want to try it pending a more official plugin being avaiable again I s
 7. Alternatively, if you have access to a plugin that lets you copy / paste from other publish services, such as jb Collection Tools, then you may use this to establish collection sets and collections in the new publish sevice and then run the option Check / Link Piwigo Structure on the Lightroom Publishing Manager screen. This links the publish service to Piwigo
 6. You can then populate these collections and publish to the Piwigo host. 
 7. If you already have a different Piwigo Publish service you can copy photos from those publish service collections to this one. Clicking the Publish button will send these photos to the correspoding Piwigo album, but be aware that it will create duplicate photos if a copy is already in the Piwigo album outside of this plugin, so you may wish to clear the album prior to running the export from LrC.
-
