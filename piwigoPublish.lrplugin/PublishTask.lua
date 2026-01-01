@@ -80,7 +80,7 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
         if not rv then
             PiwigoBusy = false
             LrErrors.throwUserError('Publish photos to Piwigo - cannot check category exists on piwigo at ' ..
-            propertyTable.host)
+                propertyTable.host)
             return nil
         end
     end
@@ -146,10 +146,18 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
             local filePath = pathOrMessage
             local metaData = {}
             metaData.Albumid = albumId
-            -- allow custom metadata selection here
             metaData.Creator = lrPhoto:getFormattedMetadata("creator") or ""
-            metaData.Title = lrPhoto:getFormattedMetadata("title") or ""
-            metaData.Caption = lrPhoto:getFormattedMetadata("caption") or ""
+
+            if propertyTable.mdTitle and propertyTable.mdTitle ~= "" then
+                metaData.Title = utils.setCustomMetadata(lrPhoto, propertyTable.mdTitle)
+            else
+                metaData.Title = lrPhoto:getFormattedMetadata("title") or ""
+            end
+            if propertyTable.mdDescription and propertyTable.mdDescription ~= "" then
+                metaData.Caption = utils.setCustomMetadata(lrPhoto, propertyTable.mdDescription)
+            else
+                metaData.Caption = lrPhoto:getFormattedMetadata("caption") or ""
+            end
 
             metaData.fileName = lrPhoto:getFormattedMetadata("fileName") or ""
             local lrTime = lrPhoto:getRawMetadata("dateTimeOriginal")

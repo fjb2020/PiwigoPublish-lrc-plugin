@@ -97,10 +97,18 @@ local function SendMetadata()
         local metaData = {}
 
             -- allow custom metadata selection here
-        metaData.Creator = lrPhoto:getFormattedMetadata( "creator" ) or ""
-        metaData.Title = lrPhoto:getFormattedMetadata("title") or ""
-        metaData.Caption = lrPhoto:getFormattedMetadata("caption") or ""
+        if publishSettings.mdTitle and publishSettings.mdTitle ~= "" then
+            metaData.Title = utils.setCustomMetadata(lrPhoto, publishSettings.mdTitle)
+        else
+            metaData.Title = lrPhoto:getFormattedMetadata("title") or ""
+        end
+        if publishSettings.mdDescription and publishSettings.mdDescription ~= "" then
+            metaData.Caption = utils.setCustomMetadata(lrPhoto, publishSettings.mdDescription)
+        else
+            metaData.Caption = lrPhoto:getFormattedMetadata("caption") or ""
+        end
 
+        metaData.Creator = lrPhoto:getFormattedMetadata( "creator" ) or ""
 
         metaData.fileName = lrPhoto:getFormattedMetadata("fileName") or ""
         local lrTime = lrPhoto:getRawMetadata("dateTimeOriginal") 

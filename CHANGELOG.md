@@ -1,11 +1,18 @@
 # Changelog
+## [20260101.20] - 2026-01-01
+### Fixed
+Fixed #13 - new option to allow different metadata to be used for title and description
+
+### Added
+New option in Lightroom Publishing Manager panel - Metadata Settings. Allows tokenised strings to be used for image Title and Description as sent to Piwigo - tokens idenfified by {{token}} will be subtituted for image specific values on export. Supports all metadata documented in photo:getFormattedMetadata and photo:getRawMetadata from the Lightroom Classic SDK. See Wiki for more information.
+
 ## [20251229.19] - 2025-12-29
 Fixed #22 - Error 1003 - Keyword already exisits. Required normalisation of keywords - all lower case, remove accents etc - for comparison between LrC and Piwigo keyword names as Piwigo effectively does accent-folding + case-folding and Lrc retains original.
 
 Fixed #16 (after re-opening) - New option to check local collection / set structure against existing Piwigo album structure - missing Piwigo albums will be created and incorrect links between collections / sets will be updated. Mis-named special collections will be renamed.
 
 ## [20251227.18] - 2025-12-27
-### ### Fixed
+### Fixed
 Fixed #16 - When importing a smart collection album a publishing error occurs - Running Import Smart Collection Settings created a collection within the Publish Service but a corresponding Piwigo album wasn't. This fix checks for missing albums during the Publish process and creates them if needed
 
 ## [20251227.17] - 2025-12-27

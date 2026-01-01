@@ -52,6 +52,8 @@ return {
 		{ key = "userPW", default = '' },
 		{ key = "KwFullHierarchy", default = true},
 		{ key = "KwSynonyms", default = true},
+		{ key = "mdTitle", default = "{{title}}"},
+		{ key = "mdDescription", default = "{{caption}}"},
         --{ key = "scNameFix",default = false}
 		
 	},

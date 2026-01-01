@@ -14,9 +14,10 @@ A Lightroom Classic plugin which publishes images to a Piwigo host via the Piwig
 * Metadata and keywords are exported directly to Piwigo regardless of exif/iptc settings - as part of the publish process along with the photo, or separately via a menu on the Library -> Plug-in Extras menu - which sends the metadata without re-sending the photo.
   * the following fields are set : 
     * author from Lrc Creator,
-    * name from LrC Title,
-    * comment from LrC Caption,
-    * date_creation from LrC Date Time Original,
+    * date_creation from LrC Date Time Original
+    * name (title) - default from LrC Title,
+    * comment (description) - default from LrC Caption,
+    * tokenised strings may be used instead for image name (title) and comment (description) - tokens idenfified by {{token}} will be substituted for image specific values on export. All metadata documented in photo:getFormattedMetadata (see https://archive.stecman.co.nz/files/docs/lightroom-sdk/API-Reference/modules/LrPhoto.html#photo:getFormattedMetadata) and photo:getRawMetadata (see https://archive.stecman.co.nz/files/docs/lightroom-sdk/API-Reference/modules/LrPhoto.html#photo:getRawMetadata) from the Lightroom Classic SDK are supported - for example: title, caption, headline, altTextAccessibility, extDescrAccessibility, copyName are supported.
   * Keywords are handled as follows: 
     * The Include on Export attribute set on individual keywords is respected.
     * Flags for Include Full Keyword Hierarchy and Include Keyword Synonyms can be set in the LrC Publishing Manager (the equivalent flags set in the LrC Keyword Tag editor are not visible to plugins so can't be used)
@@ -39,15 +40,14 @@ A Lightroom Classic plugin which publishes images to a Piwigo host via the Piwig
 
 * Metadata customisation - select which LrC metedata fields are used for Piwigo photo Title and Description fields.
 * Per album custom settings - allowing image sizes and other settings to be set at album level, overriding the global Publish Manager settings
-* Metadata Check - check metadata on Piwigo matches Lrc (Title, Caption, GPS, Creator)
+* Localisation for different languages
 
 ## The following functionality is planned:
 
 * Support for the X-PIWIGO-API header instead of Authorization when sending API keys - v16.1 and above
 * Import collection/set/image structure from another publish service
     * if remoteIds / URLs are present these will be copied. Useful to copy another publish service where a Piwigo host is the target without having to clear the existing Piwigo albums prior to re-publishing.
-* Localisation for different languages
-
+* Metadata Check - check metadata on Piwigo matches Lrc (Title, Caption, GPS, Creator)
 
 ## The following functionality is not currently planned:
 * Download images from Piwigo to local drive

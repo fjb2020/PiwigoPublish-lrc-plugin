@@ -42,7 +42,7 @@ function utils.serialiseVar(value, indent)
     -- serialises an unknown variable
     indent = indent or ""
     local t = type(value)
-    
+
     if t == "table" then
         local parts = {}
         table.insert(parts, "{\n")
@@ -68,8 +68,8 @@ end
 -- *************************************************
 function utils.uuid()
     -- create uuid in form xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
-    local template ='xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
-    return string.gsub(template, '[xy]', function (c)
+    local template = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
+    return string.gsub(template, '[xy]', function(c)
         local v = (c == 'x') and math.random(0, 0xf) or math.random(8, 0xb)
         return string.format('%x', v)
     end)
@@ -77,7 +77,7 @@ end
 
 -- *************************************************
 function utils.extractNumber(inStr)
--- Extract first number (integer or decimal, optional sign) from a string
+    -- Extract first number (integer or decimal, optional sign) from a string
 
     local num = string.match(inStr, "[-+]?%d+%.?%d*")
     if num then
@@ -101,7 +101,7 @@ end
 
 -- *************************************************
 function utils.parseSingleGPS(coordStr)
--- Try parsing a single coordinate (works for DMS or DM)
+    -- Try parsing a single coordinate (works for DMS or DM)
     local deg, min, sec, hemi = string.match(coordStr, "(%d+)°(%d+)'([%d%.]+)\"%s*([NSEW])")
     if deg then
         return utils.dmsToDecimal(deg, min, sec, hemi)
@@ -128,11 +128,10 @@ function utils.parseGPS(coordStr)
     local lon = utils.parseSingleGPS(lonStr)
 
     return lat, lon
-
 end
 
 -- *************************************************
-function utils.findNode(xmlNode,  nodeName )
+function utils.findNode(xmlNode, nodeName)
     -- iteratively find nodeName in xmlNode
 
     if xmlNode:name() == nodeName then
@@ -151,9 +150,8 @@ end
 
 -- *************************************************
 function utils.fileExists(fName)
-
-    local f = io.open(fName,"r")
-    if f then 
+    local f = io.open(fName, "r")
+    if f then
         io.close(f)
         return true
     end
@@ -162,12 +160,12 @@ end
 
 -- *************************************************
 function utils.stringtoTable(inString, delim)
-    -- create table based on passed in delimited string 
+    -- create table based on passed in delimited string
     local rtnTable = {}
 
-    for substr in string.gmatch(inString, "[^".. delim.. "]*") do
+    for substr in string.gmatch(inString, "[^" .. delim .. "]*") do
         if substr ~= nil and string.len(substr) > 0 then
-            table.insert(rtnTable,substr)
+            table.insert(rtnTable, substr)
         end
     end
 
@@ -177,7 +175,7 @@ end
 -- *************************************************
 function utils.tabletoString(inTable, delim)
     local rtnString = ""
-    for ss,value in pairs(inTable) do
+    for ss, value in pairs(inTable) do
         if rtnString == "" then
             rtnString = value
         else
@@ -190,12 +188,12 @@ end
 
 -- *************************************************
 function utils.tagParse(tag)
-  -- parse hierarchical tag structure (delimted by |) into table of individual elements
-  local tag_table = {}
-  for line in (tag .. "|"):gmatch("([^|]*)|") do
-    table.insert(tag_table,line)
-  end
-  return tag_table
+    -- parse hierarchical tag structure (delimted by |) into table of individual elements
+    local tag_table = {}
+    for line in (tag .. "|"):gmatch("([^|]*)|") do
+        table.insert(tag_table, line)
+    end
+    return tag_table
 end
 
 -- *************************************************
@@ -212,19 +210,18 @@ function utils.cutApiKey(key)
 end
 
 ---- *************************************************
-function utils.GetKWHierarchy(kwHierarchy,thisKeyword,pos)
-    -- build hierarchical list of parent keywords 
+function utils.GetKWHierarchy(kwHierarchy, thisKeyword, pos)
+    -- build hierarchical list of parent keywords
     kwHierarchy[pos] = thisKeyword
     if thisKeyword:getParent() == nil then
         return kwHierarchy
     end
     pos = pos + 1
-    return(utils.GetKWHierarchy(kwHierarchy,thisKeyword:getParent(),pos))
-
+    return (utils.GetKWHierarchy(kwHierarchy, thisKeyword:getParent(), pos))
 end
 
 ---- *************************************************
-function utils.GetKWfromHeirarchy(LrKeywords,kwStructure,logger)
+function utils.GetKWfromHeirarchy(LrKeywords, kwStructure, logger)
     -- returns keyword from lowest element of hierarchical kwStructure (in form level1|level2|level3 ...)
 
     -- spilt kwStructure into individual elements
@@ -237,19 +234,18 @@ function utils.GetKWfromHeirarchy(LrKeywords,kwStructure,logger)
                 if thisKW:getName() == lastKWName then
                     return thisKW
                 else
-                    thisKW = utils.GetLrKeyword(thisKW:getChildren(),kwName)
+                    thisKW = utils.GetLrKeyword(thisKW:getChildren(), kwName)
                 end
             else
-                thisKW = utils.GetLrKeyword(LrKeywords,kwName)
+                thisKW = utils.GetLrKeyword(LrKeywords, kwName)
             end
-
         end
     end
     return thisKW
 end
 
 -- *************************************************
-function utils.GetLrKeyword(LrKeywords,keywordName)
+function utils.GetLrKeyword(LrKeywords, keywordName)
     -- recursive function to return keyword with name matching keywordName
     for _, thisKeyword in ipairs(LrKeywords) do
         if thisKeyword:getName() == keywordName then
@@ -262,7 +258,6 @@ function utils.GetLrKeyword(LrKeywords,keywordName)
         end
     end
     return nil
-    
 end
 
 -- *************************************************
@@ -282,9 +277,9 @@ function utils.checkKw(thisPhoto, searchKw)
         -- thisKeyword is leaf node
         -- now need to build full hierarchical structure for thiskeyword
         kwHierarchy = {}
-        kwHierarchy = utils.GetKWHierarchy(kwHierarchy,thisKeyword,1)
-        local thisKwLevels = #kwHierarchy 
-        for kk,kwLevel in ipairs(kwHierarchy) do
+        kwHierarchy = utils.GetKWHierarchy(kwHierarchy, thisKeyword, 1)
+        local thisKwLevels = #kwHierarchy
+        for kk, kwLevel in ipairs(kwHierarchy) do
             local kwLevelName = kwLevel:getName()
             --log:info("Level " .. kk .. " is " .. kwLevelName)
             if not stopSearch then
@@ -293,8 +288,8 @@ function utils.checkKw(thisPhoto, searchKw)
                     if searchKwLevels > 1 then
                         if thisKwLevels >= searchKwLevels then
                             local foundHKW = true
-                            for hh = 2, searchKwLevels do    
-                                if searchKwTable[hh] ~= kwHierarchy[kk-hh+1]:getName() then
+                            for hh = 2, searchKwLevels do
+                                if searchKwTable[hh] ~= kwHierarchy[kk - hh + 1]:getName() then
                                     foundHKW = false
                                 end
                             end
@@ -313,6 +308,7 @@ function utils.checkKw(thisPhoto, searchKw)
     end
     return foundKW
 end
+
 -- *************************************************
 function utils.checkTagUnique(tag, tagTable)
     -- look for string (tag) in table of strings(tags) and return true if found
@@ -323,17 +319,16 @@ function utils.checkTagUnique(tag, tagTable)
         end
     end
     return true
-
 end
 
 -- *************************************************
-function  utils.tagsToIds(pwTagTable, tagString)
+function utils.tagsToIds(pwTagTable, tagString)
     -- convert tagString to list of assoiciated tag ids via lookup on pwTagTable (tag table returned from pwg.tags.getList)
-   
+
     local tagIdList = ""
     local missingTags = {}
     local tagTable = utils.stringtoTable(tagString, ",")
-    
+
     for _, thisTag in pairs(tagTable) do
         local tagId = ""
         local foundTag = false
@@ -346,23 +341,23 @@ function  utils.tagsToIds(pwTagTable, tagString)
                 -- Piwigo <= v15 returns name
                 pwTagName = pwTag.name
             end
-            -- need to normalise thisTag and pwTagName for comparison 
+            -- need to normalise thisTag and pwTagName for comparison
             local n_thisTag = utils.normaliseWord(thisTag)
             local n_pwTagName = utils.normaliseWord(pwTagName)
             if n_thisTag == n_pwTagName then
-            --if thisTag:lower() == pwTagName:lower() then
+                --if thisTag:lower() == pwTagName:lower() then
 
                 tagIdList = tagIdList .. pwTag.id .. ","
                 foundTag = true
             end
         end
-        if not(foundTag) then
+        if not (foundTag) then
             table.insert(missingTags, thisTag)
         end
     end
-    if string.sub(tagIdList,-1) == "," then
+    if string.sub(tagIdList, -1) == "," then
         -- remove trailing , if present
-        tagIdList = string.sub(tagIdList,1,-2)
+        tagIdList = string.sub(tagIdList, 1, -2)
     end
 
     return tagIdList, missingTags
@@ -377,8 +372,8 @@ function utils.BuildTagString(propertyTable, lrPhoto)
     local tagTable = {}
     for ii, thisKeyword in ipairs(lrPhoto:getRawMetadata("keywords")) do
         local kwHierarchy = {}
-        kwHierarchy = utils.GetKWHierarchy(kwHierarchy,thisKeyword,1)
-        for kk,kwLevel in ipairs(kwHierarchy) do
+        kwHierarchy = utils.GetKWHierarchy(kwHierarchy, thisKeyword, 1)
+        for kk, kwLevel in ipairs(kwHierarchy) do
             local kwAtts = kwLevel:getAttributes()
             if kwAtts.includeOnExport then
                 local kwLevelName = kwLevel:getName()
@@ -413,44 +408,85 @@ function utils.BuildTagString(propertyTable, lrPhoto)
     end
     tagString = utils.tabletoString(tagTable, ",")
     return tagString
-
 end
 
 -- *************************************************
 local function normaliseId(id)
--- Normalise IDs for consistent comparison
+    -- Normalise IDs for consistent comparison
     if id == nil then return nil end
     return tostring(id)
 end
 
+
 -- *************************************************
 function utils.normaliseWord(word)
--- Normalise Name for consistent comparison
--- handles accents etc 
+    -- Normalise Name for consistent comparison
+    -- handles accents etc
     local accentMap = {
-        ["à"]="a", ["á"]="a", ["â"]="a", ["ã"]="a", ["ä"]="a", ["å"]="a",
-        ["À"]="a", ["Á"]="a", ["Â"]="a", ["Ã"]="a", ["Ä"]="a", ["Å"]="a",
+        ["à"] = "a",
+        ["á"] = "a",
+        ["â"] = "a",
+        ["ã"] = "a",
+        ["ä"] = "a",
+        ["å"] = "a",
+        ["À"] = "a",
+        ["Á"] = "a",
+        ["Â"] = "a",
+        ["Ã"] = "a",
+        ["Ä"] = "a",
+        ["Å"] = "a",
 
-        ["è"]="e", ["é"]="e", ["ê"]="e", ["ë"]="e",
-        ["È"]="e", ["É"]="e", ["Ê"]="e", ["Ë"]="e",
+        ["è"] = "e",
+        ["é"] = "e",
+        ["ê"] = "e",
+        ["ë"] = "e",
+        ["È"] = "e",
+        ["É"] = "e",
+        ["Ê"] = "e",
+        ["Ë"] = "e",
 
-        ["ì"]="i", ["í"]="i", ["î"]="i", ["ï"]="i",
-        ["Ì"]="i", ["Í"]="i", ["Î"]="i", ["Ï"]="i",
+        ["ì"] = "i",
+        ["í"] = "i",
+        ["î"] = "i",
+        ["ï"] = "i",
+        ["Ì"] = "i",
+        ["Í"] = "i",
+        ["Î"] = "i",
+        ["Ï"] = "i",
 
-        ["ò"]="o", ["ó"]="o", ["ô"]="o", ["õ"]="o", ["ö"]="o",
-        ["Ò"]="o", ["Ó"]="o", ["Ô"]="o", ["Õ"]="o", ["Ö"]="o",
+        ["ò"] = "o",
+        ["ó"] = "o",
+        ["ô"] = "o",
+        ["õ"] = "o",
+        ["ö"] = "o",
+        ["Ò"] = "o",
+        ["Ó"] = "o",
+        ["Ô"] = "o",
+        ["Õ"] = "o",
+        ["Ö"] = "o",
 
-        ["ù"]="u", ["ú"]="u", ["û"]="u", ["ü"]="u",
-        ["Ù"]="u", ["Ú"]="u", ["Û"]="u", ["Ü"]="u",
+        ["ù"] = "u",
+        ["ú"] = "u",
+        ["û"] = "u",
+        ["ü"] = "u",
+        ["Ù"] = "u",
+        ["Ú"] = "u",
+        ["Û"] = "u",
+        ["Ü"] = "u",
 
-        ["ý"]="y", ["ÿ"]="y",
-        ["Ý"]="y",
+        ["ý"] = "y",
+        ["ÿ"] = "y",
+        ["Ý"] = "y",
 
-        ["ç"]="c", ["Ç"]="c",
-        ["ñ"]="n", ["Ñ"]="n",
+        ["ç"] = "c",
+        ["Ç"] = "c",
+        ["ñ"] = "n",
+        ["Ñ"] = "n",
 
-        ["œ"]="oe", ["Œ"]="oe",
-        ["æ"]="ae", ["Æ"]="ae",
+        ["œ"] = "oe",
+        ["Œ"] = "oe",
+        ["æ"] = "ae",
+        ["Æ"] = "ae",
     }
 
     if not word or word == "" then
@@ -470,21 +506,311 @@ function utils.normaliseWord(word)
     word = word:gsub("^%s+", ""):gsub("%s+$", "")
 
     return word
+end
 
+-- ************************************************
+function utils.getValidMetadataTokens()
+    local formattedTokenTable = {
+
+        -- Formatted metadata tokens
+        -- Keywords
+        keywordTags = true,
+        keywordTagsForExport = true,
+
+        -- File info
+        fileName = true,
+        preservedFileName = true,
+        copyName = true,
+        folderName = true,
+        fileSize = true,
+        fileType = true,
+
+        -- Rating & labels
+        rating = true,
+        label = true,
+        -- Descriptive
+        title = true,
+        caption = true,
+
+        -- Dimensions
+        dimensions = true,
+        croppedDimensions = true,
+
+        -- Exposure
+        exposure = true,
+        shutterSpeed = true,
+        aperture = true,
+        brightnessValue = true,
+        exposureBias = true,
+        flash = true,
+        exposureProgram = true,
+        meteringMode = true,
+        isoSpeedRating = true,
+        focalLength = true,
+        focalLength35mm = true,
+        lens = true,
+        subjectDistance = true,
+
+        -- Dates
+        dateTimeOriginal = true,
+        dateTimeDigitized = true,
+        dateTime = true,
+        -- Camera
+        cameraMake = true,
+        cameraModel = true,
+        cameraSerialNumber = true,
+
+        -- Creator / software
+        artist = true,
+        software = true,
+
+        -- GPS
+        gps = true,
+        gpsAltitude = true,
+
+        -- IPTC creator fields
+        creator = true,
+        creatorJobTitle = true,
+        creatorAddress = true,
+        creatorCity = true,
+        creatorStateProvince = true,
+        creatorPostalCode = true,
+        creatorCountry = true,
+        creatorPhone = true,
+        creatorEmail = true,
+        creatorUrl = true,
+
+        -- IPTC content
+        headline = true,
+        iptcSubjectCode = true,
+        descriptionWriter = true,
+        iptcCategory = true,
+        iptcOtherCategories = true,
+        dateCreated = true,
+        intellectualGenre = true,
+        scene = true,
+
+        -- Location shown
+        location = true,
+        city = true,
+        stateProvince = true,
+        country = true,
+        isoCountryCode = true,
+
+        -- Rights / usage
+        jobIdentifier = true,
+        instructions = true,
+        provider = true,
+        source = true,
+        copyright = true,
+        copyrightState = true,
+        rightsUsageTerms = true,
+        copyrightInfoUrl = true,
+
+        -- People / events
+        personShown = true,
+        nameOfOrgShown = true,
+        codeOfOrgShown = true,
+        event = true,
+
+        -- Locations (tables)
+        locationCreated = true,
+        locationShown = true,
+
+        -- Artwork / objects
+        artworksShown = true,
+
+        -- Model release
+        additionalModelInfo = true,
+        modelAge = true,
+        minorModelAge = true,
+        modelReleaseStatus = true,
+        modelReleaseID = true,
+
+        -- Image supplier / registry
+        imageSupplier = true,
+        imageSupplierImageId = true,
+        registryId = true,
+
+        -- Image sizing
+        maxAvailWidth = true,
+        maxAvailHeight = true,
+
+        -- Source & creators
+        sourceType = true,
+        imageCreator = true,
+
+        -- Rights / licensing (PLUS)
+        copyrightOwner = true,
+        licensor = true,
+        propertyReleaseID = true,
+        propertyReleaseStatus = true,
+
+        -- Identifiers
+        digImageGUID = true,
+        plusVersion = true,
+
+        gpsImgDirection = true,
+
+        altTextAccessibility = true,
+        extDescrAccessibility = true,
+    }
+    local rawTokenTable = {
+        -- Raw metadata tokens
+        -- Core (SDK ≤ 1.x)
+        fileSize = true,
+        rating = true,
+        dimensions = true,
+        croppedDimensions = true,
+        shutterSpeed = true,
+        aperture = true,
+        exposureBias = true,
+        flash = true,
+        isoSpeedRating = true,
+        focalLength = true,
+        focalLength35mm = true,
+        dateTimeOriginal = true,
+        dateTimeDigitized = true,
+        dateTime = true,
+        gps = true,
+        gpsAltitude = true,
+        countVirtualCopies = true,
+        virtualCopies = true,
+        masterPhoto = true,
+        isVirtualCopy = true,
+        countStackInFolderMembers = true,
+        stackInFolderMembers = true,
+        isInStackInFolder = true,
+        stackInFolderIsCollapsed = true,
+        stackPositionInFolder = true,
+        topOfStackInFolderContainingPhoto = true,
+        colorNameForLabel = true,
+
+        -- SDK ≥ 2.0
+        fileFormat = true,
+        width = true,
+        height = true,
+        aspectRatio = true,
+        isCropped = true,
+        dateTimeOriginalISO8601 = true,
+        dateTimeDigitizedISO8601 = true,
+        dateTimeISO8601 = true,
+        lastEditTime = true,
+        editCount = true,
+        copyrightState = true,
+
+        -- SDK ≥ 3.0
+        uuid = true,
+        path = true,
+        isVideo = true,
+        durationInSeconds = true,
+        keywords = true,
+        customMetadata = true,
+
+        -- SDK ≥ 4.0
+        pickStatus = true,
+
+        -- SDK ≥ 4.1
+        trimmedDurationInSeconds = true,
+        durationRatio = true,
+        trimmedDurationRatio = true,
+        locationIsPrivate = true,
+
+        -- SDK ≥ 5.0
+        smartPreviewInfo = true,
+
+        -- SDK ≥ 6.0
+        gpsImgDirection = true,
+
+        -- SDK ≥ 12.1
+        bitDepth = true,
+
+        -- SDK ≥ 13.2 (Accessibility)
+        --RAW_altTextAccessibility = true,
+        --RAW_extDescrAccessibility = true,
+
+        -- SDK ≥ 13.3
+        isExported = true,
+
+    }
+    return formattedTokenTable, rawTokenTable
+end
+
+-- ************************************************
+local function safeGetMetadata(lrPhoto, key, mdType)
+    local value = key
+
+    if mdType == "F" then
+        value = lrPhoto:getFormattedMetadata(key)
+        return value
+    end
+    if mdType == "R" then
+        value = lrPhoto:getRawMetadata(key)
+        return value
+    end
+
+    return value
+end
+
+-- ************************************************
+function utils.setCustomMetadata(lrPhoto, mdTemplate)
+    -- set custom metadata based on template string
+    local metaStr = mdTemplate
+    local formattedTokenTable, rawTokenTable = utils.getValidMetadataTokens()
+
+    -- find all {{ }} tokens in the string
+    for token in string.gmatch(metaStr, "{{(.-)}}") do
+        local replaceValue 
+        if string.sub(token, 1, 4) == "RAW_" then
+            -- raw metadata token
+            local rawToken = string.sub(token, 5)
+            if rawTokenTable[rawToken] then
+                replaceValue = safeGetMetadata(lrPhoto, rawToken, "R")
+            else
+                replaceValue = "{{" .. token .. "}} not recognised"
+            end
+        elseif string.sub(token, 1, 4) == "FMT_" then
+            -- formatted metadata token
+            local fmtToken = string.sub(token, 5)
+            if formattedTokenTable[fmtToken] then
+                replaceValue = safeGetMetadata(lrPhoto, fmtToken, "F")
+            else
+                replaceValue = "{{" .. token .. "}} not recognised"
+            end
+        else
+            -- check both formatted and raw token tables
+            -- prefer formatted if both exist
+            if formattedTokenTable[token] then
+                replaceValue = safeGetMetadata(lrPhoto, token, "F")
+            elseif rawTokenTable[token] then
+                replaceValue = safeGetMetadata(lrPhoto, token, "R")
+            else
+                replaceValue = "{{" .. token .. "}} not recognised" 
+            end
+        end
+        -- ensure replaceValue is string
+        if type(replaceValue) ~= "string" then
+            replaceValue = utils.serialiseVar(replaceValue)
+        end
+        -- replace token with value
+        metaStr = string.gsub(metaStr, "{{" .. token .. "}}", replaceValue)
+    end
+
+    return metaStr
 end
 
 -- ************************************************
 function utils.makePathKey(name)
-  -- trim
-  name = name:gsub("^%s+", ""):gsub("%s+$", "")
+    -- trim
+    name = name:gsub("^%s+", ""):gsub("%s+$", "")
 
-  -- normalize internal whitespace
-  name = name:gsub("%s+", " ")
+    -- normalize internal whitespace
+    name = name:gsub("%s+", " ")
 
-  -- replace path separator with lookalike or token
-  name = name:gsub("/", "∕")  -- second / is a U+2215 division slash
+    -- replace path separator with lookalike or token
+    name = name:gsub("/", "∕") -- second / is a U+2215 division slash
 
-  return name
+    return name
 end
 
 -- *************************************************
@@ -511,7 +837,7 @@ function utils.findPhotoInCollectionSet(pubCollOrSet, selPhoto)
         if pubCollOrSet:getChildCollections() then
             --log:info("utils.findPhotoInCollectionSet - searching in child collections of " .. pubCollOrSet:getName())
             local childColls = pubCollOrSet:getChildCollections()
-            if  childColls then
+            if childColls then
                 for _, childCol in ipairs(childColls) do
                     local thisPubPhoto = utils.findPhotoInCollectionSet(childCol, selPhoto)
                     if thisPubPhoto then
@@ -525,7 +851,7 @@ function utils.findPhotoInCollectionSet(pubCollOrSet, selPhoto)
             --log:info("utils.findPhotoInCollectionSet - searching in child collection sets of " .. pubCollOrSet:getName())
             local childSets = pubCollOrSet:getChildCollectionSets()
             if childSets then
-                for _,childSet in pairs(childSets) do
+                for _, childSet in pairs(childSets) do
                     local thisPubPhoto = utils.findPhotoInCollectionSet(childSet, selPhoto)
                     if thisPubPhoto then
                         return thisPubPhoto
@@ -534,8 +860,8 @@ function utils.findPhotoInCollectionSet(pubCollOrSet, selPhoto)
             end
         end
     end
-
 end
+
 -- *************************************************
 function utils.recursePubCollectionSets(collNode, allSets)
     -- Recursively search for all published collection sets
@@ -547,19 +873,18 @@ function utils.recursePubCollectionSets(collNode, allSets)
     -- Search child sets recursively
     if collNode:getChildCollectionSets() then
         local collSets = collNode:getChildCollectionSets()
-        if  collSets then
+        if collSets then
             for _, set in ipairs(collSets) do
                 local thisSet = utils.recursePubCollectionSets(set, allSets)
             end
         end
     end
     return allSets
-
 end
 
 -- *************************************************
 function utils.recursivePubCollectionSearchByRemoteID(collNode, findID)
--- Recursively search for a published collection or published collection set matching a given remoteId (string or number)
+    -- Recursively search for a published collection or published collection set matching a given remoteId (string or number)
 
     -- Check this collNode if it has a remote ID (only if collNode is a collection or set)
     if collNode:type() == 'LrPublishedCollection' or collNode:type() == 'LrPublishedCollectionSet' then
@@ -586,10 +911,10 @@ function utils.recursivePubCollectionSearchByRemoteID(collNode, findID)
     -- Search child sets recursively
     if collNode:getChildCollectionSets() then
         local collSets = collNode:getChildCollectionSets()
-        if  collSets then
+        if collSets then
             for _, set in ipairs(collSets) do
                 local foundSet = utils.recursivePubCollectionSearchByRemoteID(set, findID)
-                if foundSet then 
+                if foundSet then
                     -- this set matches
                     return foundSet
                 end
@@ -603,23 +928,23 @@ end
 -- *************************************************
 function utils.findPublishNodeByName(service, name)
     -- call utils.recursiveSearch(service, normaliseId(name))
-    if not service or not name then 
-        return nil 
+    if not service or not name then
+        return nil
     end
     return utils.recursiveSearch(service, normaliseId(name))
 end
 
 -- *************************************************
 function utils.clean_spaces(text)
-  --removes spaces from the front and back of passed in text
-  text = string.gsub(text,"^%s*","")
-  text = string.gsub(text,"%s*$","")
-  return text
+    --removes spaces from the front and back of passed in text
+    text = string.gsub(text, "^%s*", "")
+    text = string.gsub(text, "%s*$", "")
+    return text
 end
 
 -- *************************************************
 function utils.nilOrEmpty(val)
--- check if val is nil or empty
+    -- check if val is nil or empty
 
     if val == nil then
         return true
@@ -653,32 +978,31 @@ function utils.urlEncode(str)
 end
 
 -- *************************************************
-function utils.buildGet(url,params)
-  -- Helper to build GET URL with params
+function utils.buildGet(url, params)
+    -- Helper to build GET URL with params
     local encoded = {}
     for k, param in pairs(params) do
         local name = utils.urlEncode(param.name) or ""
         local value = utils.urlEncode(param.value) or ""
-        table.insert(encoded, name .. "=" ..value)
+        table.insert(encoded, name .. "=" .. value)
     end
     return url .. "&" .. table.concat(encoded, "&")
 end
 
 -- *************************************************
 function utils.buildPost(params)
-  -- Helper to build urlencoded POST params
+    -- Helper to build urlencoded POST params
     local post = {}
     for k, v in pairs(params) do
-      table.insert(post, k .. "=" .. utils.urlEncode(v))
+        table.insert(post, k .. "=" .. utils.urlEncode(v))
     end
     return table.concat(post, "&")
-
 end
 
 -- *************************************************
 function utils.buildPostBodyFromParams(params)
-  -- Helper to build urlencoded POST params
-  -- take param table with name value pairs and return urlencoded string
+    -- Helper to build urlencoded POST params
+    -- take param table with name value pairs and return urlencoded string
 
     local parts = {}
     for _, pair in ipairs(params) do
@@ -687,14 +1011,12 @@ function utils.buildPostBodyFromParams(params)
         table.insert(parts, string.format("%s=%s", name, value))
     end
     return table.concat(parts, "&")
-
-
 end
 
 -- *************************************************
 function utils.buildHeader(params)
-  -- Helper to build GET URL with params
-   
+    -- Helper to build GET URL with params
+
     --[[
     local header = {}
     for k, param in pairs(params) do
@@ -733,22 +1055,21 @@ end
 
 -- *************************************************
 function utils.extract_cookies(raw)
-  -- Helper function to parse Set-Cookie headers into "key=value" pairs
+    -- Helper function to parse Set-Cookie headers into "key=value" pairs
 
-  local cookies = {}
-  -- Split by comma to separate multiple Set-Cookie headers
-  for _, cookieStr in ipairs(raw) do
+    local cookies = {}
+    -- Split by comma to separate multiple Set-Cookie headers
+    for _, cookieStr in ipairs(raw) do
         -- A cookie string looks like: "SESSIONID=abc123; Path=/; HttpOnly"
-        local firstPart = cookieStr:match("^[^;]+")   -- take only before first ";"
+        local firstPart = cookieStr:match("^[^;]+") -- take only before first ";"
         if firstPart then
             local k, v = firstPart:match("^%s*([^=]+)=(.*)$")
             if k and v then
                 cookies[k] = v
             end
         end
-  end
-  return cookies
-
+    end
+    return cookies
 end
 
 -- *************************************************
@@ -756,7 +1077,8 @@ function utils.getLogfilePath()
     -- get logfile path based on os and version
     local filename = 'PiwigoPublishPlugin.log'
     local macPath14 = LrPathUtils.getStandardFilePath('home') .. "/Library/Logs/Adobe/Lightroom/LrClassicLogs/"
-    local winPath14 = LrPathUtils.getStandardFilePath('home') .. "\\AppData\\Local\\Adobe\\Lightroom\\Logs\\LrClassicLogs\\"
+    local winPath14 = LrPathUtils.getStandardFilePath('home') ..
+        "\\AppData\\Local\\Adobe\\Lightroom\\Logs\\LrClassicLogs\\"
     local macPathOld = LrPathUtils.getStandardFilePath('documents') .. "/LrClassicLogs/"
     local winPathOld = LrPathUtils.getStandardFilePath('documents') .. "\\LrClassicLogs\\"
 
