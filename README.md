@@ -115,7 +115,6 @@ This plugin is my attempt to allow me to continue publishing to Piwigo from LrC,
 
 [Min Idzelis with his Immich Plugin](https://github.com/midzelis/mi.Immich.Publisher)
 
-
 ## Disclaimer
 
 With the exception of JSON.lua, Copyright 2010-2017 Jeffrey Friedl, which is released under a Creative Commons CC-BY "Attribution" License: http://creativecommons.org/licenses/by/3.0/deed.en_US, this software is released under the GNU General Public License version 3 as published by the Free Software Foundation.
