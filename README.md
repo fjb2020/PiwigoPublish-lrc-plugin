@@ -1,6 +1,6 @@
 # PiwigoPublish-lrc-plugin
 
-A Lightroom Classic plugin which publishes images to a Piwigo host via the Piwigo REST API.
+A Lightroom Classic plugin which publishes images to a Piwigo host via the Piwigo API.
 
 ## The following fuctionality is available:
 

@@ -1,4 +1,9 @@
 # Changelog
+## [20260105.23] - 2026-01-05
+### Fixed
+Fix #24 rename album does not update custom metadata. Also fix error that incorrect albumname was used for metadata with special collections 
+Fix regression introduced by 20260104.22 causing crash when creating new album or album set
+
 ## [20260104.22] - 2026-01-04
 ### Fixed
 Changes to Category (album) visibility in Piwigo could cause duplicates to be created by plugin if a previously public album was changed to private in Piwigo and then a photo published to it. The plugin now effectively ignores public/private settings and can access all albums on the Piwigo host.

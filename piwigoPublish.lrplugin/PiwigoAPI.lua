@@ -1041,6 +1041,61 @@ function PiwigoAPI.storeMetaData(catalog, propertyTable, lrPhoto, pluginData)
 end
 
 -- *************************************************
+function PiwigoAPI.updateMetaDataforCollection(propertyTable, pubCollection, metaData)
+    -- function to update metadata on all photos in a published collection
+    log:info("PiwigoAPI.updateMetaDataforCollection - collection " .. pubCollection:getName())
+    local catalog = LrApplication.activeCatalog()
+    local pubphotos = pubCollection:getPublishedPhotos()
+    local catId = pubCollection:getRemoteId()
+    local albumName = metaData.name or ""
+
+
+    for _, pubPhoto in ipairs(pubphotos) do
+        local lrPhoto = pubPhoto:getPhoto()
+        local pwImageID = pubPhoto:getRemoteId()
+        local photoRemoteId = pubPhoto:getRemoteId()
+        local mdRemoteUrl = lrPhoto:getPropertyForPlugin(_PLUGIN, "pwImageURL") or ""
+        local checkUrl = string.format("%s/picture.php?/%s/category/%s", propertyTable.host, photoRemoteId,
+            tostring(catId))
+
+        if mdRemoteUrl == checkUrl then
+            -- photo metadata is from this collection - update metadata fields
+            -- update metadata fields in lrPhoto
+            catalog:withWriteAccessDo("Updating " .. lrPhoto:getFormattedMetadata("fileName"),
+                function()
+                    lrPhoto:setPropertyForPlugin(_PLUGIN, "pwAlbumName", albumName)
+                end)
+        end
+    end
+end
+
+-- *************************************************
+function PiwigoAPI.updateMetaDataforCollectionSet(propertyTable, pubCollectionSet, metaData)
+    -- function to update metadata on all photos in a published collection
+    log:info("PiwigoAPI.updateMetaDataforCollectionSet - collection " .. pubCollectionSet:getName())
+    local catalog = LrApplication.activeCatalog()
+    local collSetName = pubCollectionSet:getName()
+    local remoteId = pubCollectionSet:getRemoteId()
+    local scCollSetName = PiwigoAPI.buildSpecialCollectionName(metaData.name or "")
+    -- look for special collection in children of this set
+    if pubCollectionSet:getChildCollections() == nil then
+        -- no child collections so nothing to do
+        return
+    end
+
+    for _, childColl in ipairs(pubCollectionSet:getChildCollections()) do
+        local thisName = childColl:getName()
+        if string.sub(thisName, 1, 1) == "[" and string.sub(thisName, -1) == "]" then
+            -- found special collection - update metadata for photos in this collection
+            log:info("PiwigoAPI.updateMetaDataforCollectionSet - renaming special collection " .. thisName ..
+                " to " .. scCollSetName)
+            PiwigoAPI.setCollectionDets(childColl, catalog, propertyTable, scCollSetName, remoteId, pubCollectionSet)
+            PiwigoAPI.updateMetaDataforCollection(propertyTable, childColl, metaData)
+        end
+    end
+end
+
+-- *************************************************
 function PiwigoAPI.getPublishServicesForPlugin(pluginID)
     -- Helper to get all publish service connections for this plugin
     local catalog = LrApplication.activeCatalog()
@@ -1145,13 +1200,8 @@ function PiwigoAPI.pwConnect(propertyTable)
         { field = "Content-Type",    value = "application/x-www-form-urlencoded" },
         { field = "Accept-Encoding", value = "identity" },
     }
-    log:info("PiwigoAPI.pwConnect - connecting to " .. propertyTable.pwurl)
-    log:info("PiwigoAPI.pwConnect - body:\n" .. utils.serialiseVar(body))
 
     local httpResponse, httpHeaders = LrHttp.post(propertyTable.pwurl, body, headers)
-
-    log:info("PiwigoAPI.pwConnect - response headers:\n" .. utils.serialiseVar(httpHeaders))
-    log:info("PiwigoAPI.pwConnect - response body:\n" .. tostring(httpResponse))
 
     if (httpHeaders.status == 201) or (httpHeaders.status == 200) then
         -- successful connection to Piwigo
@@ -1159,6 +1209,10 @@ function PiwigoAPI.pwConnect(propertyTable)
         -- Decode JSON safely
         local ok, rtnBody = pcall(JSON.decode, JSON, httpResponse)
         if not ok or type(rtnBody) ~= "table" then
+            log:info("PiwigoAPI.pwConnect - connecting to " .. propertyTable.pwurl)
+            log:info("PiwigoAPI.pwConnect - body:\n" .. utils.serialiseVar(body))
+            log:info("PiwigoAPI.pwConnect - response headers:\n" .. utils.serialiseVar(httpHeaders))
+            log:info("PiwigoAPI.pwConnect - response body:\n" .. tostring(httpResponse))
             LrDialogs.message(
                 "Cannot log in to Piwigo",
                 "Invalid or unreadable server response"
@@ -1196,6 +1250,10 @@ function PiwigoAPI.pwConnect(propertyTable)
             return false
         end
     else
+        log:info("PiwigoAPI.pwConnect - connecting to " .. propertyTable.pwurl)
+        log:info("PiwigoAPI.pwConnect - body:\n" .. utils.serialiseVar(body))
+        log:info("PiwigoAPI.pwConnect - response headers:\n" .. utils.serialiseVar(httpHeaders))
+        log:info("PiwigoAPI.pwConnect - response body:\n" .. tostring(httpResponse))
         local statusCode, statusDesc
         status = httpHeaders and httpHeaders.status
         if httpHeaders and httpHeaders.error then
@@ -1329,7 +1387,7 @@ end
 
 -- *************************************************
 function PiwigoAPI.pwCategoriesGetThis(propertyTable, thisCat)
-    log:info("PiwigoAPI.pwCategoriesGetThis - propertyTable\n" .. utils.serialiseVar(propertyTable))
+    log:info("PiwigoAPI.pwCategoriesGetThis")
     local rv
 
     -- check connection to piwigo
@@ -1377,13 +1435,11 @@ end
 function PiwigoAPI.pwCategoriesGet(propertyTable, thisCat)
     -- get list of categories from Piwigo
     -- if thisCat is set then return this category and children, otherwise all categories
-
+    log:info("PiwigoAPI.pwCategoriesGet")
     local Params = {
-        --{ name = "method",    value = "pwg.categories.getList" },
         { name = "method",    value = "pwg.categories.getAdminList" },
         { name = "recursive", value = "true" },
-        --{ name = "tree",     value = "false" },
-        --{ name = "fullname", value = "false" }
+
     }
 
     if not (utils.nilOrEmpty(thisCat)) then
@@ -1506,9 +1562,15 @@ function PiwigoAPI.pwCategoriesAdd(propertyTable, info, metaData, callStatus)
         return callStatus
     end
 
+    local name = metaData.name or ""
+    local description = metaData.description or ""
+    local albumstatus = metaData.status or "public"
+
     local Params = {
         { name = "method",    value = "pwg.categories.add" },
-        { name = "name",      value = metaData.name },
+        { name = "name",      value = name },
+        { name = "comment",   value = description },
+        { name = "status",    value = albumstatus },
         { name = "pwg_token", value = propertyTable.token }
     }
     if metaData.parentCat ~= "" then
@@ -1621,6 +1683,8 @@ end
 -- *************************************************
 function PiwigoAPI.pwCategoriesSetinfo(propertyTable, info, metaData)
     -- Set info on category - change name etc
+
+    log:info("PiwigoAPI.pwCategoriesSetinfo")
     local callStatus = {}
     callStatus.status = false
     callStatus.statusMsg = ""
@@ -1643,8 +1707,8 @@ function PiwigoAPI.pwCategoriesSetinfo(propertyTable, info, metaData)
     end
 
     local remoteId = metaData.remoteId
-    local name = metaData.name
-    local description = metaData.description
+    local name = metaData.name or ""
+    local description = metaData.description or ""
     local status = metaData.status or "public"
 
     local params = {
@@ -1655,7 +1719,6 @@ function PiwigoAPI.pwCategoriesSetinfo(propertyTable, info, metaData)
         { name = "status",      value = status },
         { name = "pwg_token",   value = propertyTable.token }
     }
-    log:info("PiwigoAPI.pwCategoriesSetinfo - params \n" .. utils.serialiseVar(params))
 
     local httpResponse, httpHeaders = LrHttp.postMultipart(
         propertyTable.pwurl,
@@ -1664,9 +1727,6 @@ function PiwigoAPI.pwCategoriesSetinfo(propertyTable, info, metaData)
             headers = { field = "Cookie", value = propertyTable.cookies }
         }
     )
-
-    log:info("PiwigoAPI.pwCategoriesSetinfo - httpHeaders\n" .. utils.serialiseVar(httpHeaders))
-    log:info("PiwigoAPI.pwCategoriesSetinfo - httpResponse\n" .. utils.serialiseVar(httpResponse))
 
     local body
     if httpResponse then
@@ -1677,10 +1737,16 @@ function PiwigoAPI.pwCategoriesSetinfo(propertyTable, info, metaData)
             callStatus.status = true
             callStatus.statusMsg = ""
         else
+            log:info("PiwigoAPI.pwCategoriesSetinfo - params \n" .. utils.serialiseVar(params))
+            log:info("PiwigoAPI.pwCategoriesSetinfo - httpHeaders\n" .. utils.serialiseVar(httpHeaders))
+            log:info("PiwigoAPI.pwCategoriesSetinfo - httpResponse\n" .. utils.serialiseVar(httpResponse))
             callStatus.status = false
             callStatus.statusMsg = "Category " .. tostring(remoteId) .. " - " .. (body.message or "")
         end
     else
+        log:info("PiwigoAPI.pwCategoriesSetinfo - params \n" .. utils.serialiseVar(params))
+        log:info("PiwigoAPI.pwCategoriesSetinfo - httpHeaders\n" .. utils.serialiseVar(httpHeaders))
+        log:info("PiwigoAPI.pwCategoriesSetinfo - httpResponse\n" .. utils.serialiseVar(httpResponse))
         callStatus.status = false
         callStatus.statusMsg = "Category " .. tostring(remoteId) .. " - " .. (body.message or "")
     end

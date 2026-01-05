@@ -54,21 +54,23 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
 
     log:info('PublishTask.processRenderedPhotos - publishSettings:\n' .. utils.serialiseVar(propertyTable))
 
-    --[[
-    local publishCollection = exportContext.publishCollection
-    local publishCollectionProps = publishCollection:getPropertyTable()
-    log:info('PublishTask.processRenderedPhotos - publishCollectionProps:\n' .. utils.serialiseVar(publishCollectionProps))
-]]
-
     local publishedCollection = exportContext.publishedCollection
     local collectionInfo = publishedCollection:getCollectionInfoSummary()
     local collectionSettings = collectionInfo.collectionSettings
     -- log:info('PublishTask.processRenderedPhotos - collectionInfo:\n' .. utils.serialiseVar(collectionInfo))
-    local albumName = publishedCollection:getName()
-    local albumId = publishedCollection:getRemoteId()
-    local albumUrl = publishedCollection:getRemoteUrl()
     local parentCollSet = publishedCollection:getParent()
     local parentID = ""
+    local albumName = publishedCollection:getName()
+    -- check if album is special collection and and use name of parent album if so
+    if string.sub(albumName, 1, 1) == "[" and string.sub(albumName, -1) == "]" then
+        if parentCollSet then
+            albumName = parentCollSet:getName()
+        end
+    end
+    local albumId = publishedCollection:getRemoteId()
+    local albumUrl = publishedCollection:getRemoteUrl()
+
+
     local requestRepub = false
     if parentCollSet then
         parentID = parentCollSet:getRemoteId()
@@ -106,7 +108,6 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
     end
 
     local resetConnectioncount = 0
-
     local renditionParams = {
         stopIfCanceled = true,
     }
@@ -161,10 +162,10 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
 
             metaData.fileName = lrPhoto:getFormattedMetadata("fileName") or ""
             local lrTime = lrPhoto:getRawMetadata("dateTimeOriginal")
-            metaData.dateCreated = LrDate.timeToUserFormat(lrTime, "%Y-%m-%d %H:%M:%S")
+            metaData.dateCreated = (LrDate.timeToUserFormat(lrTime, "%Y-%m-%d %H:%M:%S")) or ""
             metaData.Remoteid = remoteId
 
-            metaData.tagString = utils.BuildTagString(propertyTable, lrPhoto)
+            metaData.tagString = utils.BuildTagString(propertyTable, lrPhoto) or ""
             -- run to build missingTags - tags that will be created on upload to Piwigo
             -- will use this to decide whether to run build tagtable cache
             -- means we don't have to rebuild after each uploaded photo
@@ -278,7 +279,7 @@ function PublishTask.deletePhotosFromPublishedCollection(publishSettings, arrayO
 
     -- set up async prococess for piwigo calls
     LrTasks.startAsyncTask(function()
-        -- now go through each photo in photosToUnpublish and renove from Piwigo
+        -- now go through each photo in photosToUnpublish and remove from Piwigo
         for i, thisPhotoToUnpublish in pairs(photosToUnpublish) do
             local thisLrPhoto = thisPhotoToUnpublish[1]
             local thispwImageID = thisPhotoToUnpublish[2]
@@ -423,7 +424,7 @@ end
 function PublishTask.viewForCollectionSettings(f, publishSettings, info)
     log:info("PublishTask.viewForCollectionSettings")
 
-    local thisName = info.name
+    local thisName = info.name or ""
     if string.sub(thisName, 1, 1) == "[" and string.sub(thisName, -1) == "]" then
         LrDialogs.message(
             "Edit Piwigo Album",
@@ -858,15 +859,15 @@ function PublishTask.updateCollectionSetSettings(publishSettings, info)
     local metaData = {}
     metaData.name = name
     metaData.remoteId = remoteId
-    metaData.description = collectionSettings.albumDescription
+
+    metaData.description = collectionSettings.albumDescription or ""
     if collectionSettings.albumPrivate then
         metaData.status = "private"
     else
         metaData.status = "public"
     end
+
     -- update albumdesc if album exists and set
-
-
     metaData.name = CollectionName
     metaData.type = "collectionset"
     metaData.description = collectionSettings.albumDescription
@@ -958,6 +959,7 @@ end
 
 -- ************************************************
 function PublishTask.renamePublishedCollection(publishSettings, info)
+    log:info("PublishTask.renamePublishedCollection")
     local callStatus = {}
     callStatus.status = false
     -- called for both collections and collectionsets
@@ -966,13 +968,18 @@ function PublishTask.renamePublishedCollection(publishSettings, info)
     local newName = info.name
     local collection = info.publishedCollection
     local oldName = collection:getName()
-
+    local collectionSettings = nil
+    if collection:type() == "LrPublishedCollectionSet" then
+        collectionSettings = collection:getCollectionSetInfoSummary()
+    else
+        collectionSettings = collection:getCollectionInfoSummary()
+    end
     local metaData = {}
     metaData.name = newName
     metaData.remoteId = remoteId
     metaData.oldName = oldName
-    metaData.description = info.collectionSettings.albumDescription or ""
-    if info.collectionSettings.albumPrivate then
+    metaData.description = collectionSettings.albumDescription or ""
+    if collectionSettings.albumPrivate then
         metaData.status = "private"
     else
         metaData.status = "public"
@@ -991,7 +998,24 @@ function PublishTask.renamePublishedCollection(publishSettings, info)
             end
         end
     end
-    if not (callStatus.status) then
+    if (callStatus.status) then
+        -- if this is Publishedcollection then need to update metadata in photos in this collection
+        -- address metadata changes if any
+        -- go through all published photos in this collection and update metadata
+        -- need to check that remoteUrl is same as metadata field as photo may be in multiple publish collections
+        -- check all published photos in this collection
+        log:info("PublishTask.renamePublishedCollection - updating photo metadata in renamed collection - collection is a " .. collection:type())
+        if collection:type() == "LrPublishedCollection" then
+            -- only PublishedCollections have photos
+            PiwigoAPI.updateMetaDataforCollection(publishSettings, collection, metaData)
+        end
+        -- if this is a publishedCollectionSet then need to check for special collection rename that and update photos in it
+        if collection:type() == "LrPublishedCollectionSet" then
+            -- check for special collection within collectionset and rename that, and check meta of photos in that collection
+            PiwigoAPI.updateMetaDataforCollectionSet(publishSettings, collection, metaData)
+        end
+        
+    else
         LrTasks.startAsyncTask(function()
             LrFunctionContext.callWithContext("revertRename", function(context)
                 local cat = LrApplication.activeCatalog()
