@@ -229,6 +229,7 @@ local function prefsDialog(f, propertyTable)
 					width_in_chars = 50,
 					tooltip = "Click to fetch the current album structure from the Piwigo Host above. Only albums the user has permission to see will be included",
 				},
+
 			},
 
 			f:spacer { height = 1 },
@@ -290,8 +291,9 @@ local function prefsDialog(f, propertyTable)
 					tooltip = "Piwigo structure will be checked against local collection / set structure. Missing Piwigo albums will be created and links checked / updated"
 				},
 			},
+
+
 		},
-		f:spacer { height = 2 },
 
 		f:group_box {
 			title = "Metadata Settings",
@@ -371,6 +373,27 @@ local function prefsDialog(f, propertyTable)
 					value = bind 'KwSynonyms',
 				}
 			},
+		},
+		f:spacer { height = 2 },
+		f:group_box {
+			title = "Other Settings",
+			font = "<system/bold>",
+			fill_horizontal = 1,
+			f:spacer { height = 1 },
+			f:row {
+				fill_horizontal = 1,
+				f:static_text {
+					title = "",
+					alignment = 'right',
+					width_in_chars = 7,
+				},
+				f:checkbox {
+					title = "Synchronise Album Descriptions",
+					font = "<system>",
+					tooltip = "If checked, Album descriptions will be maintainable in Lightroom and sent to Piwigo",
+					value = bind 'syncAlbumDescriptions',
+				},
+			}
 		},
 	}
 end

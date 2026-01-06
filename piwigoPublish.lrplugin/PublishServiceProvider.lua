@@ -54,6 +54,7 @@ return {
 		{ key = "KwSynonyms", default = true},
 		{ key = "mdTitle", default = "{{title}}"},
 		{ key = "mdDescription", default = "{{caption}}"},
+		{ key = "syncAlbumDescriptions", default = false}
         --{ key = "scNameFix",default = false}
 		
 	},

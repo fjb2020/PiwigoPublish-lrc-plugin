@@ -72,6 +72,6 @@ end
 
 _G.PiwigoBusy = false
 _G.iconPath = _PLUGIN:resourceId("icons/icon_med.png")
-_G.pluginVersion = "20260106.24"
+_G.pluginVersion = "20260106.25"
 --_G.LocStrings = utils.loadStrings()
 

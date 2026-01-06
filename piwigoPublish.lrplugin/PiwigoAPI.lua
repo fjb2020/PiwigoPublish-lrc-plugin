@@ -729,8 +729,13 @@ local function createCollection(propertyTable, node, parentNode, isLeafNode, sta
                         stat.errors = stat.errors + 1
                     else
                         collectionSettings = newColl:getCollectionInfoSummary().collectionSettings or {}
-                        collectionSettings.albumDescription = collDescription
-                        collectionSettings.albumPrivate = collStatus == "private"
+                        if propertyTable.syncAlbumDescriptions then
+                            collectionSettings.albumDescription = collDescription
+                            collectionSettings.albumPrivate = collStatus == "private"
+                        else
+                            collectionSettings.albumDescription = ""
+                            collectionSettings.albumPrivate = "public"
+                        end
                         catalog:withWriteAccessDo("Add Piwigo details to collections", function()
                             newColl:setRemoteId(remoteId)
                             newColl:setRemoteUrl(propertyTable.host .. "/index.php?/category/" .. remoteId)
@@ -754,8 +759,14 @@ local function createCollection(propertyTable, node, parentNode, isLeafNode, sta
                     else
                         -- now add remoteids and urls to collections and collection sets, and description and status
                         collectionSettings = newColl:getCollectionSetInfoSummary().collectionSettings or {}
-                        collectionSettings.albumDescription = collDescription
-                        collectionSettings.albumPrivate = collStatus == "private"
+                        if propertyTable.syncAlbumDescriptions then
+                            collectionSettings.albumDescription = collDescription
+                            collectionSettings.albumPrivate = collStatus == "private"
+                        else
+                            collectionSettings.albumDescription = ""
+                            collectionSettings.albumPrivate = "public"
+                        end
+
                         catalog:withWriteAccessDo("Add Piwigo details to collections", function()
                             newColl:setRemoteId(remoteId)
                             newColl:setRemoteUrl(propertyTable.host .. "/index.php?/category/" .. remoteId)
@@ -773,8 +784,14 @@ local function createCollection(propertyTable, node, parentNode, isLeafNode, sta
                 -- existing collection
                 log:info("createCollection - updating existing PublishedCollection " .. existingColl:getName())
                 collectionSettings = existingColl:getCollectionInfoSummary().collectionSettings or {}
-                collectionSettings.albumDescription = collDescription
-                collectionSettings.albumPrivate = collStatus == "private"
+                if propertyTable.syncAlbumDescriptions then
+                    collectionSettings.albumDescription = collDescription
+                    collectionSettings.albumPrivate = collStatus == "private"
+                else
+                    collectionSettings.albumDescription = ""
+                    collectionSettings.albumPrivate = "public"
+                end
+
                 catalog:withWriteAccessDo("Update Piwigo details to collections", function()
                     existingColl:setCollectionSettings(collectionSettings)
                 end)
@@ -782,8 +799,13 @@ local function createCollection(propertyTable, node, parentNode, isLeafNode, sta
                 -- existing collection set
                 log:info("createCollection - updating existing PublishedCollectionSet " .. existingColl:getName())
                 collectionSettings = existingColl:getCollectionSetInfoSummary().collectionSettings or {}
-                collectionSettings.albumDescription = collDescription
-                collectionSettings.albumPrivate = collStatus == "private"
+                if propertyTable.syncAlbumDescriptions then
+                    collectionSettings.albumDescription = collDescription
+                    collectionSettings.albumPrivate = collStatus == "private"
+                else
+                    collectionSettings.albumDescription = ""
+                    collectionSettings.albumPrivate = "public"
+                end
                 catalog:withWriteAccessDo("Update Piwigo details to collections", function()
                     existingColl:setCollectionSetSettings(collectionSettings)
                 end)
@@ -1570,10 +1592,14 @@ function PiwigoAPI.pwCategoriesAdd(propertyTable, info, metaData, callStatus)
     local Params = {
         { name = "method",    value = "pwg.categories.add" },
         { name = "name",      value = name },
-        { name = "comment",   value = description },
-        { name = "status",    value = albumstatus },
         { name = "pwg_token", value = propertyTable.token }
     }
+
+    if propertyTable.syncAlbumDescriptions then
+        table.insert(Params, { name = "comment", value = description })
+        table.insert(Params, { name = "status", value = albumstatus })
+    end
+
     if metaData.parentCat ~= "" then
         table.insert(Params, { name = "parent", value = metaData.parentCat })
     end
@@ -1716,11 +1742,12 @@ function PiwigoAPI.pwCategoriesSetinfo(propertyTable, info, metaData)
         { name = "method",      value = "pwg.categories.setInfo" },
         { name = "category_id", value = tostring(remoteId) },
         { name = "name",        value = name },
-        { name = "comment",     value = description },
-        { name = "status",      value = status },
         { name = "pwg_token",   value = propertyTable.token }
     }
-
+    if propertyTable.syncAlbumDescriptions then
+        table.insert(params, { name = "comment", value = description })
+        table.insert(params, { name = "status", value = status })
+    end
     local httpResponse, httpHeaders = LrHttp.postMultipart(
         propertyTable.pwurl,
         params,
@@ -1946,7 +1973,6 @@ function PiwigoAPI.updateMetadata(propertyTable, lrPhoto, metaData)
         return callStatus
     end
     if metaData.Remoteid ~= "" then
-        
         local rtnStatus = PiwigoAPI.checkPhoto(propertyTable, metaData.Remoteid)
         if not rtnStatus.status then
             log:info("PiwigoAPI.updateMetadata - checking for existing photo with remoteid " .. metaData.Remoteid)
@@ -2020,7 +2046,7 @@ function PiwigoAPI.updateMetadata(propertyTable, lrPhoto, metaData)
         end
     end
 
-       -- now update Piwigo
+    -- now update Piwigo
     local postResponse = PiwigoAPI.httpPostMultiPart(propertyTable, params)
     if not postResponse.status then
         callStatus.statusMsg = "Unable to set metadata - " .. postResponse.statusMsg
@@ -2132,9 +2158,9 @@ function PiwigoAPI.specialCollections(propertyTable)
         local name = thisSet:getName()
         local scName = PiwigoAPI.buildSpecialCollectionName(name)
         log:info("Processing collection set " ..
-        thisSet:getName() .. ", " .. scName .. ", remoteId " .. tostring(remoteId))
+            thisSet:getName() .. ", " .. scName .. ", remoteId " .. tostring(remoteId))
         local scColl = PiwigoAPI.createPublishCollection(catalog, publishService, propertyTable, scName, remoteId,
-        thisSet)
+            thisSet)
         if scColl == nil then
             LrDialogs.message("Failed to create special collection for " .. name, "", "warning")
         end

@@ -311,7 +311,7 @@ end
 -- ************************************************
 function PublishTask.getCommentsFromPublishedCollection(publishSettings, arrayOfPhotoInfo, commentCallback)
     log:info("PublishTask.getCommentsFromPublishedCollection")
-        --[[
+    --[[
     for i, photoInfo in ipairs(arrayOfPhotoInfo) do
         log:info("PublishTask.getCommentsFromPublishedCollection - photoInfo:\n" .. utils.serialiseVar(photoInfo))
 
@@ -515,6 +515,11 @@ function PublishTask.viewForCollectionSettings(f, publishSettings, info)
             f:row {
                 f:static_text { title = "Album Description:", font = "<system>", alignment = 'right', width = share 'label_width', },
                 f:edit_field {
+                    enabled = LrView.bind {
+                        key = 'syncAlbumDescriptions',
+                        object = publishSettings,
+                    },
+
                     value = bind 'albumDescription',
                     width_in_chars = 40,
                     font = "<system>",
@@ -791,6 +796,10 @@ function PublishTask.viewForCollectionSetSettings(f, publishSettings, info)
             f:row {
                 f:static_text { title = "Album Description:", font = "<system>", alignment = 'right', width = share 'label_width', },
                 f:edit_field {
+                    enabled = LrView.bind {
+                        key = 'syncAlbumDescriptions',
+                        object = publishSettings,
+                    },
                     value = bind 'albumDescription',
                     width_in_chars = 40,
                     font = "<system>",
@@ -860,6 +869,7 @@ function PublishTask.updateCollectionSetSettings(publishSettings, info)
     else
         metaData.status = "public"
     end
+
 
     -- update albumdesc if album exists and set
     metaData.name = CollectionName
@@ -999,8 +1009,8 @@ function PublishTask.renamePublishedCollection(publishSettings, info)
         -- need to check that remoteUrl is same as metadata field as photo may be in multiple publish collections
         -- check all published photos in this collection
         log:info(
-        "PublishTask.renamePublishedCollection - updating photo metadata in renamed collection - collection is a " ..
-        collection:type())
+            "PublishTask.renamePublishedCollection - updating photo metadata in renamed collection - collection is a " ..
+            collection:type())
         if collection:type() == "LrPublishedCollection" then
             -- only PublishedCollections have photos
             PiwigoAPI.updateMetaDataforCollection(publishSettings, collection, metaData)

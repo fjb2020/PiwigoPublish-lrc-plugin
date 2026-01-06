@@ -1,4 +1,8 @@
 # Changelog
+## [20260106.25] - 2026-01-06
+### Fixed
+Fix #27 - Album formatting lost on import to LrC
+
 ## [20260106.24] - 2026-01-06
 ### Fixed
 Fix #23 - Keyword settings in publish service settings dialog get cut-off
