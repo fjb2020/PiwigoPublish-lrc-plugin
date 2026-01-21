@@ -1219,4 +1219,61 @@ function utils.pwBusyMessage(callingFunction, displayFunction)
 end
 
 -- *************************************************
+function utils.extractPwImageIdFromUrl(url, expectedHost)
+    -- Extracts the Piwigo image_id from a URL like "http://host/picture.php?/822/..."
+    -- Verifies that the URL matches the expected host
+    if not url or url == "" then return nil end
+    if expectedHost and not url:find(expectedHost, 1, true) then return nil end
+    
+    local imageId = url:match("picture%.php%?/(%d+)")
+    return imageId
+end
+
+-- *************************************************
+function utils.findExistingPwImageId(publishService, lrPhoto)
+    -- Searches if this LR photo is already published in another collection of the same service
+    -- Returns the Piwigo remoteId if found, nil otherwise
+    
+    local foundRemoteId = nil
+    
+    local function searchInCollection(collection)
+        if foundRemoteId then return end
+        local pubPhotos = collection:getPublishedPhotos()
+        for _, pubPhoto in ipairs(pubPhotos) do
+            if pubPhoto:getPhoto().localIdentifier == lrPhoto.localIdentifier then
+                local rid = pubPhoto:getRemoteId()
+                if rid and rid ~= "" then
+                    foundRemoteId = rid
+                    return
+                end
+            end
+        end
+    end
+    
+    local function searchInSet(collectionSet)
+        if foundRemoteId then return end
+        -- Search in child collections
+        local childColls = collectionSet:getChildCollections()
+        if childColls then
+            for _, coll in ipairs(childColls) do
+                searchInCollection(coll)
+                if foundRemoteId then return end
+            end
+        end
+        -- Search in child sets (recursive)
+        local childSets = collectionSet:getChildCollectionSets()
+        if childSets then
+            for _, childSet in ipairs(childSets) do
+                searchInSet(childSet)
+                if foundRemoteId then return end
+            end
+        end
+    end
+    
+    -- Start search from service root
+    searchInSet(publishService)
+    
+    return foundRemoteId
+end
+
 return utils

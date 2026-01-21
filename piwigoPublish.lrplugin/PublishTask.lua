@@ -134,6 +134,43 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
 
         local lrPhoto = rendition.photo
         local remoteId = rendition.publishedPhotoId or ""
+        
+        -- Detect photo already published in this service (multi-album support)
+        local existingPwImageId = nil
+        if remoteId == "" then
+            -- Method 1: Via custom metadata (photos published with plugin >= 20251224.16)
+            local storedImageUrl = lrPhoto:getPropertyForPlugin(_PLUGIN, "pwImageURL")
+            local storedHost = lrPhoto:getPropertyForPlugin(_PLUGIN, "pwHostURL")
+            
+            log:info("DEBUG multi-album: remoteId vide, checking metadata...")
+            log:info("DEBUG storedHost: " .. tostring(storedHost))
+            log:info("DEBUG storedImageUrl: " .. tostring(storedImageUrl))
+            log:info("DEBUG propertyTable.host: " .. tostring(propertyTable.host))
+            
+            if storedHost == propertyTable.host and storedImageUrl then
+                existingPwImageId = utils.extractPwImageIdFromUrl(storedImageUrl, propertyTable.host)
+            end
+            
+            -- Method 2: Search in other collections of the service (fallback)
+            if not existingPwImageId then
+                log:info("DEBUG multi-album: metadata vides, recherche cross-collection...")
+                local publishService = publishedCollection:getService()
+                existingPwImageId = utils.findExistingPwImageId(publishService, lrPhoto)
+                if existingPwImageId then
+                    log:info("DEBUG multi-album: trouvé via cross-collection, ID = " .. tostring(existingPwImageId))
+                end
+            end
+            
+            -- Verify the image still exists on Piwigo
+            if existingPwImageId then
+                local checkStatus = PiwigoAPI.checkPhoto(propertyTable, existingPwImageId)
+                if not checkStatus.status then
+                    log:info("DEBUG multi-album: image " .. existingPwImageId .. " n'existe plus sur Piwigo")
+                    existingPwImageId = nil
+                end
+            end
+        end
+        
         -- Wait for next photo to render.
         local success, pathOrMessage = rendition:waitForRender()
 
@@ -149,6 +186,25 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
             -- photo has been exported to temporary location - upload to piwigo
             callStatus = {}
             local filePath = pathOrMessage
+            
+            -- If photo already exists on Piwigo, associate instead of uploading
+            if existingPwImageId then
+                log:info("Photo exists on Piwigo (ID " .. existingPwImageId .. "), associating to album " .. albumId)
+                callStatus = PiwigoAPI.associateImageToCategory(propertyTable, existingPwImageId, albumId)
+                
+                if callStatus.status then
+                    rendition:recordPublishedPhotoId(callStatus.remoteid)
+                    rendition:recordPublishedPhotoUrl(callStatus.remoteurl)
+                    rendition:renditionIsDone(true)
+                    LrFileUtils.delete(pathOrMessage)
+                else
+                    log:warn("Association failed: " .. (callStatus.statusMsg or "") .. ", falling back to upload")
+                    existingPwImageId = nil
+                end
+            end
+            
+            if not existingPwImageId then
+            -- Begin existing upload block (indent all upload code until end of if success)
             local metaData = {}
             -- build metadata structure
             metaData = utils.getPhotoMetadata(propertyTable, lrPhoto)
@@ -202,6 +258,7 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
             end
             -- When done with photo, delete temp file.
             LrFileUtils.delete(pathOrMessage)
+            end -- end if not existingPwImageId
         else
             rendition:uploadFailed(pathOrMessage or "Render failed")
         end
@@ -279,18 +336,32 @@ function PublishTask.deletePhotosFromPublishedCollection(publishSettings, arrayO
             local thisLrPhoto = thisPhotoToUnpublish[1]
             local thispwImageID = thisPhotoToUnpublish[2]
             local thisPubPhoto = thisPhotoToUnpublish[3]
-            callStatus = PiwigoAPI.deletePhoto(publishSettings, pwCatID, thispwImageID, callStatus)
+            
+            -- Use dissociate instead of delete to preserve multi-album associations
+            log:info("PublishTask.deletePhotosFromPublishedCollection - dissociating photo " .. thispwImageID .. " from category " .. pwCatID)
+            callStatus = PiwigoAPI.dissociateImageFromCategory(publishSettings, thispwImageID, pwCatID)
             if callStatus.status then
-                catalog:withWriteAccessDo("Updating " .. thisLrPhoto:getFormattedMetadata("fileName"),
-                    function()
-                        thisLrPhoto:setPropertyForPlugin(_PLUGIN, "pwHostURL", "")
-                        thisLrPhoto:setPropertyForPlugin(_PLUGIN, "pwAlbumName", "")
-                        thisLrPhoto:setPropertyForPlugin(_PLUGIN, "pwAlbumURL", "")
-                        thisLrPhoto:setPropertyForPlugin(_PLUGIN, "pwImageURL", "")
-                        thisLrPhoto:setPropertyForPlugin(_PLUGIN, "pwUploadDate", "")
-                        thisLrPhoto:setPropertyForPlugin(_PLUGIN, "pwUploadTime", "")
-                        thisLrPhoto:setPropertyForPlugin(_PLUGIN, "pwCommentSync", "")
-                    end)
+                -- Only clear metadata if photo is no longer in any other published collection
+                -- Check if photo exists in other collections of this service
+                local publishService = publishedCollection:getService()
+                local stillPublished = utils.findExistingPwImageId(publishService, thisLrPhoto)
+                
+                if not stillPublished then
+                    -- Photo is no longer published anywhere, clear all metadata
+                    log:info("PublishTask.deletePhotosFromPublishedCollection - photo " .. thispwImageID .. " orphaned, clearing metadata")
+                    catalog:withWriteAccessDo("Updating " .. thisLrPhoto:getFormattedMetadata("fileName"),
+                        function()
+                            thisLrPhoto:setPropertyForPlugin(_PLUGIN, "pwHostURL", "")
+                            thisLrPhoto:setPropertyForPlugin(_PLUGIN, "pwAlbumName", "")
+                            thisLrPhoto:setPropertyForPlugin(_PLUGIN, "pwAlbumURL", "")
+                            thisLrPhoto:setPropertyForPlugin(_PLUGIN, "pwImageURL", "")
+                            thisLrPhoto:setPropertyForPlugin(_PLUGIN, "pwUploadDate", "")
+                            thisLrPhoto:setPropertyForPlugin(_PLUGIN, "pwUploadTime", "")
+                            thisLrPhoto:setPropertyForPlugin(_PLUGIN, "pwCommentSync", "")
+                        end)
+                else
+                    log:info("PublishTask.deletePhotosFromPublishedCollection - photo " .. thispwImageID .. " still in other collections, keeping metadata")
+                end
                 thisPhotoToUnpublish[4] = true
             else
                 PiwigoBusy = false
