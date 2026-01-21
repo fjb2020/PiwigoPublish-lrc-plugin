@@ -21,10 +21,16 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
+
+local LrHttp = import 'LrHttp'
+
 PluginInfoDialogSections = {}
 
 -- *************************************************
 function PluginInfoDialogSections.startDialog(propertyTable)
+    -- Initialize update status
+    propertyTable.updateStatus = UpdateChecker.getUpdateStatus()
+    
     if prefs.debugEnabled == nil then
        prefs.debugEnabled = false
     end
@@ -51,6 +57,43 @@ function PluginInfoDialogSections.sectionsForBottomOfDialog(f, propertyTable)
     local share = LrView.share
 
     return {
+
+        {
+            bind_to_object = propertyTable,
+
+            title = "Plugin Updates",
+
+            f:row {
+                f:static_text {
+                    title = "Current version: " .. pluginVersion,
+                    alignment = 'left',
+                },
+            },
+            f:row {
+                f:static_text {
+                    title = bind 'updateStatus',
+                    alignment = 'left',
+                },
+            },
+            f:row {
+                f:push_button {
+                    title = "Check for Updates",
+                    action = function()
+                        UpdateChecker.checkForUpdates(false) -- silent = false
+                    end,
+                },
+                f:push_button {
+                    title = "Visit GitHub Repository",
+                    action = function()
+                        LrHttp.openUrlInBrowser(
+                            "https://github.com/" .. 
+                            UpdateChecker.GITHUB_OWNER .. "/" .. 
+                            UpdateChecker.GITHUB_REPO
+                        )
+                    end,
+                },
+            },
+        },
 
         {
             bind_to_object = propertyTable,

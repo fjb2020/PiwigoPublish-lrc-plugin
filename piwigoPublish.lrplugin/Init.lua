@@ -74,5 +74,19 @@ _G.PiwigoBusy = false
 _G.RenderPhotos = false
 _G.iconPath = _PLUGIN:resourceId("icons/icon_med.png")
 _G.pluginVersion = "20260111.26"
+-- Auto-update checker
+_G.UpdateChecker = require "UpdateChecker"
+
+-- Check for updates on plugin load (silent check)
+LrTasks.startAsyncTask(function()
+    -- Wait for Lightroom to fully load
+    LrTasks.sleep(5)
+    
+    -- Only check if interval has passed
+    if UpdateChecker.shouldCheckForUpdates() then
+        log:info("Init - performing automatic update check")
+        UpdateChecker.checkForUpdates(true) -- silent = true
+    end
+end)
 --_G.LocStrings = utils.loadStrings()
 
