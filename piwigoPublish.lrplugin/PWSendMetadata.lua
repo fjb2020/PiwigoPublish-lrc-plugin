@@ -1,5 +1,5 @@
 --[[
-   
+
     PWSendMetadata.lua
 
     Copyright (C) 2024 Fiona Boston <fiona@fbphotography.uk>.
@@ -26,10 +26,10 @@ local function SendMetadata()
     local callStatus = {}
     local catalog = LrApplication.activeCatalog()
 
-    local selPhotos =  catalog:getTargetPhotos()
+    local selPhotos = catalog:getTargetPhotos()
     local sources = catalog:getActiveSources()
     if utils.nilOrEmpty(selPhotos) then
-        LrDialogs.message("Please select photos to resend metadata","","warning")
+        LrDialogs.message("Please select photos to resend metadata", "", "warning")
         return false
     end
 
@@ -57,15 +57,17 @@ local function SendMetadata()
         end
     end
     if not useService then
-        LrDialogs.message("Please select photos in a Piwigo Publisher service","","warning")
+        LrDialogs.message("Please select photos in a Piwigo Publisher service", "", "warning")
         return false
     end
     if not publishSettings then
-        LrDialogs.message("SendMetadata - Can't find publish settings for this publish collection","","warning")
+        LrDialogs.message("SendMetadata - Can't find publish settings for this publish collection", "", "warning")
         return false
     end
 
-    local result = LrDialogs.confirm("Send Metadata to Piwigo","Send metadata to Piwigo for " ..#selPhotos .. " photo(s) in album " .. useSource:getName() .."?", "Ok","Cancel")
+    local result = LrDialogs.confirm("Send Metadata to Piwigo",
+        "Send metadata to Piwigo for " .. #selPhotos .. " photo(s) in album " .. useSource:getName() .. "?", "Ok",
+        "Cancel")
     if result ~= 'ok' then
         return false
     end
@@ -77,30 +79,35 @@ local function SendMetadata()
     }
 
     for pp, lrPhoto in pairs(selPhotos) do
-        if progressScope:isCanceled() then 
+        if progressScope:isCanceled() then
             break
         end
         progressScope:setPortionComplete(pp, #selPhotos)
-        progressScope:setCaption("Processing " .. pp .. " of " .. #selPhotos.. " photographs")
+        progressScope:setCaption("Processing " .. pp .. " of " .. #selPhotos .. " photographs")
         -- find publised photo in this collection / set
         local thisPubPhoto = utils.findPhotoInCollectionSet(useSource, lrPhoto)
         if not thisPubPhoto then
-            LrDialogs.message("SendMetadata - Can't find this photo in collection set or collections","","warning")
+            LrDialogs.message(
+            "SendMetadata - Can't find this photo in collection set or collections - has it been published?", "",
+                "warning")
+            progressScope:done()
             return false
         end
         local remoteId = thisPubPhoto:getRemoteId()
         if not remoteId then
-            LrDialogs.message("SendMetadata - Can't find Piwigo photo ID for this photo","","warning")
+            LrDialogs.message("SendMetadata - Can't find Piwigo photo ID for this photo - has it been published?", "",
+                "warning")
+            progressScope:done()
             return false
         end
         callStatus = {}
         local metaData = {}
 
         -- build metadata structure
-        metaData = utils.getPhotoMetadata(publishSettings,lrPhoto)
+        metaData = utils.getPhotoMetadata(publishSettings, lrPhoto)
         metaData.Remoteid = remoteId
 
-        callStatus = PiwigoAPI.updateMetadata(publishSettings,lrPhoto,metaData)
+        callStatus = PiwigoAPI.updateMetadata(publishSettings, lrPhoto, metaData)
         if not callStatus.status then
             LrDialogs.message("Unable to set metadata for uploaded photo - " .. callStatus.statusMsg)
         end
