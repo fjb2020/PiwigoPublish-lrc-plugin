@@ -1,7 +1,15 @@
+-- =============================================================================
+-- PiwigoPublish Plugin - French Localization / Localisation française
+-- =============================================================================
+
+-- Plugin Identity
 "$$$/Piwigo/PluginName=Piwigo Publisher"
 "$$$/Piwigo/PluginTitle=Plugin Piwigo Publisher"
-"$$$/Piwigo/PluginVersion=Version du plugin %s"
+"$$$/Piwigo/PluginVersion=Version du plugin "
 
+-- =============================================================================
+-- Host Settings / Paramètres de l'hôte
+-- =============================================================================
 "$$$/Piwigo/HostSettings/Title=Paramètres de l'hôte Piwigo"
 "$$$/Piwigo/HostSettings/PiwigoHost=Hôte Piwigo :"
 "$$$/Piwigo/HostSettings/UserName=Nom d'utilisateur :"
@@ -13,26 +21,104 @@
 "$$$/Piwigo/HostSettings/URLAutocorrected=L'URL saisie a été autocorrigée en %s"
 "$$$/Piwigo/HostSettings/URLNotValid=L'URL saisie n'est pas valide."
 
+-- =============================================================================
+-- Configuration / Sections de dialogue de publication
+-- =============================================================================
 "$$$/Piwigo/Config/Title=Configuration et paramètres du service de publication Piwigo"
 "$$$/Piwigo/Config/SetupTitle=Configuration du service de publication"
+
+-- Log Settings / Paramètres de journalisation
+"$$$/Piwigo/Config/LogSettings=Paramètres de journalisation"
+"$$$/Piwigo/Config/LogLevel=Niveau de log :"
+"$$$/Piwigo/Config/ErrorsOnly=Erreurs uniquement"
+"$$$/Piwigo/Config/WarningsErrors=Avertissements et erreurs"
+"$$$/Piwigo/Config/InfoWarningsErrors=Info, avertissements et erreurs"
+"$$$/Piwigo/Config/FullDebug=Débogage complet"
+
+-- Connection Settings / Paramètres de connexion
+"$$$/Piwigo/Config/PiwigoConnection=Connexion Piwigo"
+"$$$/Piwigo/Config/ConnectionIs=État de la connexion :"
+"$$$/Piwigo/Config/Ready=Prêt"
+"$$$/Piwigo/Config/NotReady=Non prêt"
+"$$$/Piwigo/Config/ServerUrl=URL du serveur :"
+"$$$/Piwigo/Config/PiwigoUser=Utilisateur Piwigo :"
+"$$$/Piwigo/Config/PiwigoPassword=Mot de passe Piwigo :"
+"$$$/Piwigo/Config/TestConnection=Tester la connexion"
+"$$$/Piwigo/Config/RefreshAlbumList=Actualiser la liste des albums"
+"$$$/Piwigo/Config/SessionId=ID de session :"
+"$$$/Piwigo/Config/ServerInfo=Informations serveur"
+"$$$/Piwigo/Config/PiwigoVersion=Version Piwigo :"
+"$$$/Piwigo/Config/PwgToken=Token pwg :"
+
+-- Photo Metadata Settings / Paramètres des métadonnées photo
+"$$$/Piwigo/Config/PhotoMetadataSettings=Paramètres des métadonnées photo"
+"$$$/Piwigo/Config/TitleField=Titre :"
+"$$$/Piwigo/Config/CaptionField=Légende :"
+"$$$/Piwigo/Config/TagsField=Tags :"
+"$$$/Piwigo/Config/TagSeparator=Séparateur de tags :"
+"$$$/Piwigo/Config/AuthorField=Auteur :"
+"$$$/Piwigo/Config/IncludeKeywordsSynonyms=Inclure les synonymes des mots-clés comme tags"
+"$$$/Piwigo/Config/IncludeKeywordsSynonymsTooltip=Si coché, les synonymes des mots-clés seront envoyés à Piwigo comme tags"
+
+-- Upload Settings / Paramètres d'envoi
+"$$$/Piwigo/Config/UploadSettings=Paramètres d'envoi"
+"$$$/Piwigo/Config/OnReplacementOrRepublish=En cas de remplacement ou republication :"
+"$$$/Piwigo/Config/UseFileChunks=Utiliser les fragments de fichier (recommandé)"
+"$$$/Piwigo/Config/UseFileChunksTooltip=Si coché, l'envoi Piwigo sera fragmenté (recommandé pour les gros fichiers)"
+"$$$/Piwigo/Config/FileChunkSize=Taille des fragments (ko) :"
+
+-- Conflict Handling / Gestion des conflits
+"$$$/Piwigo/Config/ConflictHandling=Gestion des conflits"
+"$$$/Piwigo/Config/OnUploadConflict=En cas de conflit :"
+"$$$/Piwigo/Config/SkipKeepExisting=Ignorer (conserver l'existant)"
+"$$$/Piwigo/Config/Replace=Remplacer"
+"$$$/Piwigo/Config/Rename=Renommer"
+"$$$/Piwigo/Config/Merge=Fusionner"
+
+-- Auto Sync Metadata / Synchronisation automatique des métadonnées
+"$$$/Piwigo/Config/AutoSyncMetadata=Synchronisation auto des métadonnées"
+"$$$/Piwigo/Config/AutoSyncMetadataTooltip=Si coché, la synchronisation auto renverra les métadonnées à Piwigo pour les photos publiées"
+
+-- Multi-Album Publishing / Publication multi-albums
+"$$$/Piwigo/Config/MultiAlbumPublishing=Publication multi-albums"
+"$$$/Piwigo/Config/AllowMultiAlbum=Autoriser la publication d'une même photo dans plusieurs albums"
+"$$$/Piwigo/Config/AllowMultiAlbumTooltip=Si activé, une photo peut exister dans plusieurs albums Piwigo sans duplication de fichier"
+
+-- Import Albums / Importation des albums
 "$$$/Piwigo/Config/ImportAlbums=Importer les albums"
 "$$$/Piwigo/Config/ImportAlbumsDesc=Importer les albums existants depuis Piwigo"
 "$$$/Piwigo/Config/ImportAlbumsTooltip=Cliquez pour récupérer la structure d'albums actuelle depuis l'hôte Piwigo ci-dessus. Seuls les albums auxquels l'utilisateur a accès seront inclus"
 "$$$/Piwigo/Config/ImportAlbumsConfirmTitle=Importer les albums Piwigo"
 "$$$/Piwigo/Config/ImportAlbumsConfirmMsg=Êtes-vous sûr de vouloir importer la structure d'albums depuis Piwigo ?\nLes collections existantes ne seront pas affectées."
 "$$$/Piwigo/Config/Import=Importer"
+"$$$/Piwigo/Config/ImportAlbumsFromPiwigo=Importer les albums depuis Piwigo"
+"$$$/Piwigo/Config/ImportAlbumsAsCollections=Importer les albums comme collections publiées"
+
+-- Special Collections / Collections spéciales
+"$$$/Piwigo/Config/CreateSmartCollections=Créer les collections intelligentes"
 "$$$/Piwigo/Config/CreateSpecialCollections=Créer les collections spéciales"
 "$$$/Piwigo/Config/CreateSpecialCollectionsDesc=Créer des collections de publication spéciales pour permettre la publication d'images dans des albums avec sous-albums sur Piwigo"
 "$$$/Piwigo/Config/CreateSpecialCollectionsTooltip=Créer des collections spéciales pour permettre la publication d'images dans des albums Piwigo avec sous-albums - ce qui n'est pas nativement supporté par LrC"
 "$$$/Piwigo/Config/CreateSpecialCollectionsConfirmTitle=Créer les collections spéciales"
 "$$$/Piwigo/Config/CreateSpecialCollectionsConfirmMsg=Êtes-vous sûr de vouloir créer les collections spéciales ?\nLes collections existantes peuvent être mises à jour et les albums Piwigo manquants seront créés."
 "$$$/Piwigo/Config/Create=Créer"
+
+-- Check Album Structure / Vérification de la structure des albums
+"$$$/Piwigo/Config/CheckAlbumStructure=Vérifier la structure des albums"
+"$$$/Piwigo/Config/CheckAlbumStructureTooltip=Vérifier la structure des albums Piwigo par rapport à la structure locale des collections/ensembles"
 "$$$/Piwigo/Config/CheckLinkStructure=Vérifier et lier la structure Piwigo"
 "$$$/Piwigo/Config/CheckLinkStructureDesc=La structure Piwigo sera vérifiée par rapport à la structure locale de collections/ensembles. Les albums Piwigo manquants seront créés et les liens vérifiés/mis à jour"
 "$$$/Piwigo/Config/CheckLinkStructureConfirmTitle=Vérifier/lier la structure Piwigo"
 "$$$/Piwigo/Config/CheckLinkStructureConfirmMsg=Êtes-vous sûr de vouloir vérifier/lier la structure Piwigo ?\nLes collections existantes ne seront pas affectées."
 "$$$/Piwigo/Config/Check=Vérifier"
 
+-- Service View / Vue du service
+"$$$/Piwigo/Config/PiwigoServiceView=Vue du service Piwigo pour les paramètres de collection"
+"$$$/Piwigo/Config/ForEntireService=Pour l'ensemble du service de publication Piwigo"
+
+-- =============================================================================
+-- Metadata Settings / Paramètres des métadonnées
+-- =============================================================================
 "$$$/Piwigo/Metadata/Title=Paramètres des métadonnées"
 "$$$/Piwigo/Metadata/TitleField=Titre :"
 "$$$/Piwigo/Metadata/DescriptionField=Description :"
@@ -42,13 +128,24 @@
 "$$$/Piwigo/Metadata/PhotoURL=URL de la photo"
 "$$$/Piwigo/Metadata/UploadDate=Date d'envoi"
 "$$$/Piwigo/Metadata/UploadTime=Heure d'envoi"
+"$$$/Piwigo/Metadata/AllMetadata=Toutes les métadonnées"
+"$$$/Piwigo/Metadata/CopyrightOnly=Copyright uniquement"
+"$$$/Piwigo/Metadata/CopyrightContactOnly=Copyright et coordonnées uniquement"
+"$$$/Piwigo/Metadata/AllExceptCameraRaw=Tout sauf Camera Raw"
+"$$$/Piwigo/Metadata/AllExceptCameraAndRaw=Tout sauf Appareil et Camera Raw"
 
+-- =============================================================================
+-- Keywords Settings / Paramètres des mots-clés
+-- =============================================================================
 "$$$/Piwigo/Keywords/Title=Paramètres des mots-clés"
 "$$$/Piwigo/Keywords/IncludeFullHierarchy=Inclure la hiérarchie complète des mots-clés"
 "$$$/Piwigo/Keywords/IncludeFullHierarchyTooltip=Si coché, tous les mots-clés d'une hiérarchie seront envoyés à Piwigo"
 "$$$/Piwigo/Keywords/IncludeSynonyms=Inclure les synonymes des mots-clés"
 "$$$/Piwigo/Keywords/IncludeSynonymsTooltip=Si coché, les synonymes des mots-clés seront envoyés à Piwigo"
 
+-- =============================================================================
+-- Other Settings / Autres paramètres
+-- =============================================================================
 "$$$/Piwigo/OtherSettings/Title=Autres paramètres"
 "$$$/Piwigo/OtherSettings/SyncAlbumDescriptions=Synchroniser les descriptions d'albums"
 "$$$/Piwigo/OtherSettings/SyncAlbumDescriptionsTooltip=Si coché, les descriptions d'albums seront modifiables dans Lightroom et envoyées à Piwigo"
@@ -57,18 +154,53 @@
 "$$$/Piwigo/OtherSettings/OnlyPublishedPhotos=Uniquement les photos publiées"
 "$$$/Piwigo/OtherSettings/OnlyPublishedPhotosTooltip=Si coché, seules les photos en cours de publication auront leurs commentaires synchronisés"
 
+-- =============================================================================
+-- Album Settings / Paramètres de l'album (Dialogue paramètres collection)
+-- =============================================================================
+"$$$/Piwigo/Album/Settings=Paramètres de l'album Piwigo"
+"$$$/Piwigo/Album/Description=Description de l'album :"
+"$$$/Piwigo/Album/IsPrivate=Album privé"
+"$$$/Piwigo/Album/IsPrivateTooltip=Si coché, cet album sera privé sur Piwigo"
+"$$$/Piwigo/Album/MissingRecreated=*** Album Piwigo manquant recréé ***"
+
+-- =============================================================================
+-- Export Settings / Paramètres d'exportation (Paramètres personnalisés par collection)
+-- =============================================================================
+"$$$/Piwigo/Export/CustomSettings=Paramètres de publication personnalisés (remplace les paramètres par défaut)"
+"$$$/Piwigo/Export/UseCustomSettings=Utiliser des paramètres personnalisés pour cet album"
+"$$$/Piwigo/Export/UseCustomSettingsTooltip=Si coché, ces paramètres remplaceront les paramètres par défaut définis dans les paramètres de publication"
+"$$$/Piwigo/Export/Settings=Paramètres d'exportation"
+"$$$/Piwigo/Export/ResizeImage=Redimensionner l'image"
+"$$$/Piwigo/Export/ResizeImageTooltip=Si coché, l'image publiée sera redimensionnée selon ces paramètres"
+"$$$/Piwigo/Export/Use=Utiliser :"
+"$$$/Piwigo/Export/LongEdge=Bord long"
+"$$$/Piwigo/Export/ShortEdge=Bord court"
+"$$$/Piwigo/Export/Dimensions=Dimensions"
+"$$$/Piwigo/Export/Megapixels=Mégapixels"
+"$$$/Piwigo/Export/Percent=Pourcentage"
+"$$$/Piwigo/Export/AllowEnlarge=Autoriser l'agrandissement"
+"$$$/Piwigo/Export/AllowEnlargeTooltip=Si coché, l'image publiée sera agrandie si nécessaire"
+"$$$/Piwigo/Export/IncludeKeywordsSynonyms=Inclure les synonymes des mots-clés"
+"$$$/Piwigo/Export/IncludeKeywordsSynonymsTooltip=Si coché, les synonymes des mots-clés seront envoyés à Piwigo"
+
+-- =============================================================================
+-- Plugin Manager / Gestionnaire de plugins
+-- =============================================================================
 "$$$/Piwigo/PluginManager/LoggingTitle=Journalisation du plugin Piwigo Publisher"
 "$$$/Piwigo/PluginManager/EnableDebugLogging=Activer la journalisation de débogage"
 "$$$/Piwigo/PluginManager/LogToFile=Enregistrer dans un fichier au lieu de la console"
 "$$$/Piwigo/PluginManager/ShowLogfile=Afficher le fichier journal"
 "$$$/Piwigo/PluginManager/UpdatesTitle=Mises à jour du plugin"
-"$$$/Piwigo/PluginManager/CurrentVersion=Version actuelle : %s"
+"$$$/Piwigo/PluginManager/CurrentVersion=Version actuelle : "
 "$$$/Piwigo/PluginManager/CheckForUpdates=Vérifier les mises à jour"
 "$$$/Piwigo/PluginManager/VisitGitHub=Visiter le dépôt GitHub"
 "$$$/Piwigo/PluginManager/UpdateAvailable=Mise à jour disponible : %s"
 "$$$/Piwigo/PluginManager/UpToDate=À jour"
 "$$$/Piwigo/PluginManager/NotCheckedYet=Pas encore vérifié"
 
+-- =============================================================================
+-- Update System / Système de mise à jour
+-- =============================================================================
 "$$$/Piwigo/Update/CheckFailed=Échec de la vérification"
 "$$$/Piwigo/Update/CheckFailedConnection=Impossible de se connecter à GitHub pour vérifier les mises à jour.\nVeuillez vérifier votre connexion internet."
 "$$$/Piwigo/Update/CheckFailedParse=Impossible d'analyser les informations de mise à jour depuis GitHub."
@@ -82,11 +214,17 @@
 "$$$/Piwigo/Update/DownloadStarted=Téléchargement lancé"
 "$$$/Piwigo/Update/DownloadStartedMsg=La page de téléchargement a été ouverte dans votre navigateur.\n\nAprès le téléchargement :\n1. Quittez Lightroom Classic\n2. Remplacez le dossier du plugin par la nouvelle version\n3. Redémarrez Lightroom Classic"
 
+-- =============================================================================
+-- Menus
+-- =============================================================================
 "$$$/Piwigo/Menu/SetAlbumCover=Définir la couverture de l'album Piwigo depuis la photo sélectionnée"
 "$$$/Piwigo/Menu/SendMetadata=Envoyer les métadonnées à Piwigo pour les photos sélectionnées"
 "$$$/Piwigo/Menu/SyncMetadataOnly=Synchroniser uniquement les métadonnées (photos marquées pour republication)"
 "$$$/Piwigo/Menu/ConvertToSet=Convertir la collection publiée sélectionnée en ensemble de collections"
 
+-- =============================================================================
+-- Album Cover / Couverture d'album
+-- =============================================================================
 "$$$/Piwigo/AlbumCover/SelectPhoto=Veuillez sélectionner une photo à définir comme couverture d'album"
 "$$$/Piwigo/AlbumCover/SelectSinglePhoto=Veuillez sélectionner une seule photo à définir comme couverture d'album (%d actuellement sélectionnées)"
 "$$$/Piwigo/AlbumCover/SelectInService=Veuillez sélectionner une photo dans un service Piwigo Publisher"
@@ -97,6 +235,9 @@
 "$$$/Piwigo/AlbumCover/ConfirmTitle=Définir la couverture de l'album Piwigo"
 "$$$/Piwigo/AlbumCover/ConfirmMsg=Définir la photo sélectionnée comme couverture pour %s ?"
 
+-- =============================================================================
+-- Send Metadata / Envoi des métadonnées
+-- =============================================================================
 "$$$/Piwigo/SendMetadata/SelectPhotos=Veuillez sélectionner des photos pour renvoyer les métadonnées"
 "$$$/Piwigo/SendMetadata/SelectInService=Veuillez sélectionner des photos dans un service Piwigo Publisher"
 "$$$/Piwigo/SendMetadata/CantFindSettings=Impossible de trouver les paramètres de publication pour cette collection"
@@ -104,11 +245,14 @@
 "$$$/Piwigo/SendMetadata/ConfirmMsg=Envoyer les métadonnées à Piwigo pour %d photo(s) dans l'album %s ?"
 "$$$/Piwigo/SendMetadata/CantFindPhoto=Impossible de trouver cette photo dans l'ensemble de collections"
 "$$$/Piwigo/SendMetadata/CantFindPhotoId=Impossible de trouver l'ID Piwigo de cette photo"
-"$$$/Piwigo/SendMetadata/UnableToSet=Impossible de définir les métadonnées pour la photo envoyée - %s"
+"$$$/Piwigo/SendMetadata/UnableToSet=Impossible de définir les métadonnées pour la photo envoyée - "
 "$$$/Piwigo/SendMetadata/Progress=Mise à jour des métadonnées..."
 "$$$/Piwigo/SendMetadata/Starting=Démarrage..."
 "$$$/Piwigo/SendMetadata/Processing=Traitement de %d sur %d photos"
 
+-- =============================================================================
+-- Sync Metadata / Synchronisation des métadonnées
+-- =============================================================================
 "$$$/Piwigo/SyncMetadata/NoCollection=Aucune collection sélectionnée"
 "$$$/Piwigo/SyncMetadata/NoCollectionMsg=Veuillez sélectionner une collection publiée Piwigo dans le module Bibliothèque."
 "$$$/Piwigo/SyncMetadata/SettingsError=Erreur de paramètres"
@@ -126,6 +270,9 @@
 "$$$/Piwigo/SyncMetadata/CompleteWithErrors=Synchronisation terminée avec des erreurs"
 "$$$/Piwigo/SyncMetadata/CompleteWithErrorsMsg=Réussite : %d photo(s)\nÉchec : %d photo(s)\n\nPhotos en échec :\n%s"
 
+-- =============================================================================
+-- Collection to Set Conversion / Conversion collection vers ensemble
+-- =============================================================================
 "$$$/Piwigo/CollToSet/SelectCollection=Veuillez sélectionner une collection dans un service Piwigo Publisher"
 "$$$/Piwigo/CollToSet/CantAccessCollection=Impossible d'accéder à l'objet collection pour cette collection - vérifiez la sélection"
 "$$$/Piwigo/CollToSet/AlreadySet=Vous avez sélectionné un ensemble de collections - veuillez sélectionner une collection"
@@ -135,22 +282,37 @@
 "$$$/Piwigo/CollToSet/ConfirmMsg=Convertir %s en ensemble de collections ?"
 "$$$/Piwigo/CollToSet/CantCreate=Impossible de créer le nouvel ensemble de collections %s"
 
+-- =============================================================================
+-- Delete Album / Suppression d'album
+-- =============================================================================
 "$$$/Piwigo/DeleteAlbum/Title=Supprimer l'album"
 "$$$/Piwigo/DeleteAlbum/NoAssociatedAlbum=Cette collection n'a pas d'album Piwigo associé à supprimer."
 
+-- =============================================================================
+-- Rename / Renommage
+-- =============================================================================
 "$$$/Piwigo/Rename/Failed=Échec du renommage"
 "$$$/Piwigo/Rename/FailedMsg=Le renommage Piwigo a échoué (%s).\nLe nom de la collection a été restauré."
 
+-- =============================================================================
+-- Publish Process / Processus de publication
+-- =============================================================================
+"$$$/Piwigo/Publish/Publishing=Publication en cours"
 "$$$/Piwigo/Publish/Busy=Piwigo Publisher est occupé. Veuillez réessayer plus tard."
 "$$$/Piwigo/Publish/CantConnect=Impossible de se connecter à Piwigo sur %s"
 "$$$/Piwigo/Publish/CantCheckCategory=Impossible de vérifier si la catégorie existe sur Piwigo"
 "$$$/Piwigo/Publish/CantCreateAlbum=Impossible de créer l'album Piwigo pour %s"
+"$$$/Piwigo/Publish/MissingAlbum=*** Album Piwigo manquant ***"
 "$$$/Piwigo/Publish/MissingAlbumTitle=*** Album Piwigo manquant ***"
 "$$$/Piwigo/Publish/MissingAlbumMsg=%s, ID Cat Piwigo %s créé"
+"$$$/Piwigo/Publish/RepublishRequired=Republication requise"
 "$$$/Piwigo/Publish/DeletePhotoFailed=Échec de la suppression de la photo %s depuis Piwigo - %s"
 "$$$/Piwigo/Publish/UploadFailed=Échec de l'envoi"
 "$$$/Piwigo/Publish/RenderFailed=Échec du rendu"
 
+-- =============================================================================
+-- Progress Messages / Messages de progression
+-- =============================================================================
 "$$$/Piwigo/Progress/Starting=Démarrage..."
 "$$$/Piwigo/Progress/Processing=Traitement de %d sur %d"
 "$$$/Piwigo/Progress/Uploading=Envoi des photos..."
@@ -160,21 +322,33 @@
 "$$$/Piwigo/Progress/Deleting=Suppression..."
 "$$$/Piwigo/Progress/Updating=Mise à jour..."
 
+-- =============================================================================
+-- Buttons / Boutons
+-- =============================================================================
 "$$$/Piwigo/Button/Ok=OK"
 "$$$/Piwigo/Button/Cancel=Annuler"
 "$$$/Piwigo/Button/Close=Fermer"
 "$$$/Piwigo/Button/Yes=Oui"
 "$$$/Piwigo/Button/No=Non"
 
+-- =============================================================================
+-- Tagset / Custom Metadata / Métadonnées personnalisées
+-- =============================================================================
 "$$$/Piwigo/Tagset/Title=Métadonnées Piwigo Publisher"
 "$$$/Piwigo/Tagset/MostRecentUpload=Dernier envoi"
 
+-- =============================================================================
+-- Service
+-- =============================================================================
 "$$$/Piwigo/Service/Album=Album Piwigo"
 "$$$/Piwigo/Service/AlbumSet=Album Piwigo (Ensemble pour sous-albums)"
 "$$$/Piwigo/Service/SmartAlbum=Album Piwigo (Collection intelligente)"
 "$$$/Piwigo/Service/GoToAlbum=Aller à l'album dans Piwigo"
 "$$$/Piwigo/Service/GoToPhoto=Aller à la photo dans Piwigo"
 
+-- =============================================================================
+-- Errors / Erreurs
+-- =============================================================================
 "$$$/Piwigo/Error/Generic=Erreur"
 "$$$/Piwigo/Error/CantFindService=Impossible de trouver le service de publication"
 "$$$/Piwigo/Error/CantConnect=Impossible de se connecter à Piwigo"
@@ -185,6 +359,9 @@
 "$$$/Piwigo/Error/UserNeedsWebmaster=L'utilisateur doit avoir le rôle webmaster sur la galerie Piwigo %s"
 "$$$/Piwigo/Error/CommentsNotEnabled=Impossible d'ajouter un commentaire - les commentaires sont-ils activés sur %s ?"
 
+-- =============================================================================
+-- Success Messages / Messages de succès
+-- =============================================================================
 "$$$/Piwigo/Success/CommentAdded=Commentaire ajouté à Piwigo"
 "$$$/Piwigo/Success/AlbumCoverSet=Couverture d'album définie"
 "$$$/Piwigo/Success/MetadataSent=Métadonnées envoyées"
