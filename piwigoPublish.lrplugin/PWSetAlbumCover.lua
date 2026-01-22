@@ -1,5 +1,5 @@
 --[[
-   
+
     PWSetAlbumCover.lua
 
     Copyright (C) 2024 Fiona Boston <fiona@fbphotography.uk>.
@@ -22,24 +22,25 @@
 
 --*******************************************
 local function SetAlbumCover()
--- alternative routine that does not require a publish service to be selected 
+    -- alternative routine that does not require a publish service to be selected
 
-    
+
     log:info("SetAlbumCover")
     local catalog = LrApplication.activeCatalog()
 
-    local selPhotos =  catalog:getTargetPhotos()
+    local selPhotos = catalog:getTargetPhotos()
     local sources = catalog:getActiveSources()
     if utils.nilOrEmpty(selPhotos) then
-        LrDialogs.message("Please select a photo to set as album cover","","warning")
+        LrDialogs.message("Please select a photo to set as album cover", "", "warning")
         return false
     end
     if #selPhotos > 1 then
-        LrDialogs.message("Please select a single photo to set as album cover (" .. #selPhotos .. " currently selected)","","warning")
+        LrDialogs.message("Please select a single photo to set as album cover (" .. #selPhotos .. " currently selected)",
+            "", "warning")
         return false
     end
 
--- we now have a single photo.
+    -- we now have a single photo.
     local selPhoto = selPhotos[1]
     -- is source a LrPublishedCollection or LrPublishedCollectionSet in selected published service
     local useService = nil
@@ -65,42 +66,48 @@ local function SetAlbumCover()
         end
     end
     if not useService then
-        LrDialogs.message("Please select a photo in a Piwigo Publisher service","","warning")
+        LrDialogs.message("Please select a photo in a Piwigo Publisher service", "", "warning")
         return false
     end
     if not publishSettings then
-        LrDialogs.message("SetAlbumCover - Can't find publish settings for this publish collection","","warning")
+        LrDialogs.message("SetAlbumCover - Can't find publish settings for this publish collection", "", "warning")
         return false
     end
     if not catId then
-        LrDialogs.message("SetAlbumCover - Can't find Piwigo album ID for remoteId for this publish collection","","warning")
+        LrDialogs.message("SetAlbumCover - Can't find Piwigo album ID for remoteId for this publish collection", "",
+            "warning")
         return false
     end
     if not catId then
-        LrDialogs.message("SetAlbumCover - Can't find Piwigo album ID for remoteId for this publish collection","","warning")
+        LrDialogs.message("SetAlbumCover - Can't find Piwigo album ID for remoteId for this publish collection", "",
+            "warning")
         return false
     end
-    local result = LrDialogs.confirm("Set Piwigo Album Cover","Set select photo as cover photo for " .. useSource:getName() .."?", "Ok","Cancel")
-    if result ~= 'ok' then
-        return false
-    end
+
 
     -- find publised photo in this collection / set
     local thisPubPhoto = utils.findPhotoInCollectionSet(useSource, selPhoto)
     if not thisPubPhoto then
-        LrDialogs.message("PiwigoAPI.setAlbumCover - Can't find this photo in collection set or collections","","warning")
+        LrDialogs.message(
+        "PiwigoAPI.setAlbumCover - Can't find this photo in collection set or collections - has it been published?", "",
+            "warning")
         return false
     end
     local remoteId = thisPubPhoto:getRemoteId()
-    if not remoteId then
-        LrDialogs.message("PiwigoAPI.setAlbumCover - Can't find Piwigo photo ID for this photo","","warning")
+    if not remoteId or remoteId == "" then
+        LrDialogs.message("PiwigoAPI.setAlbumCover - Can't find Piwigo photo ID for this photo - has it been published?", "", "warning")
         return false
     end
 
+    local result = LrDialogs.confirm("Set Piwigo Album Cover",
+        "Set select photo as cover photo for " .. useSource:getName() .. "?", "Ok", "Cancel")
+    if result ~= 'ok' then
+        return false
+    end
     log:info("Setting  photo " .. remoteId .. " as cover for " .. catId)
--- set as the representative photo for an album. 
--- the Piwigo web service doesn't require that the photo belongs to the album but this function does  
--- use pwg.categories.setRepresentative(categoryId, photoId), POST only, Admin only 
+    -- set as the representative photo for an album.
+    -- the Piwigo web service doesn't require that the photo belongs to the album but this function does
+    -- use pwg.categories.setRepresentative(categoryId, photoId), POST only, Admin only
 
     local rv
 
@@ -115,15 +122,16 @@ local function SetAlbumCover()
 
     -- check role is admin level
     if publishSettings.userStatus ~= "webmaster" then
-        LrDialogs.message("User needs webmaster role on piwigo gallery at " .. publishSettings.host .. " to set album cover")
+        LrDialogs.message("User needs webmaster role on piwigo gallery at " ..
+        publishSettings.host .. " to set album cover")
         return false
     end
 
     -- now update Piwigo
     local params = {
-        { name = "method", value = "pwg.categories.setRepresentative" },
+        { name = "method",      value = "pwg.categories.setRepresentative" },
         { name = "category_id", value = catId },
-        { name = "image_id", value = remoteId },
+        { name = "image_id",    value = remoteId },
     }
     local postResponse = PiwigoAPI.httpPostMultiPart(publishSettings, params)
 
@@ -133,9 +141,6 @@ local function SetAlbumCover()
     end
 
     return true
-
-
-
 end
 
 LrTasks.startAsyncTask(SetAlbumCover)

@@ -24,11 +24,28 @@
 PluginInfoDialogSections = {}
 
 -- *************************************************
+local function resetPluginPrefs(prefix)
+    log:info("resetPluginPrefs \n" .. utils.serialiseVar(prefs))
+    for k, p in prefs:pairs() do
+        if prefix then
+            log:info("resetting " .. utils.serialiseVar(k))
+            if k:find(prefix, 1, true) == 1 then
+                prefs[k] = nil
+            end
+        else
+            log:info("resetting " .. utils.serialiseVar(k))
+            prefs[k] = nil
+        end
+    end
+end
+
+
+-- *************************************************
 function PluginInfoDialogSections.startDialog(propertyTable)
     if prefs.debugEnabled == nil then
-       prefs.debugEnabled = false
+        prefs.debugEnabled = false
     end
-    if prefs.debugToFile == nil then 
+    if prefs.debugToFile == nil then
         prefs.debugToFile = false
     end
     if prefs.debugEnabled then
@@ -42,7 +59,6 @@ function PluginInfoDialogSections.startDialog(propertyTable)
     end
     propertyTable.debugEnabled = prefs.debugEnabled
     propertyTable.debugToFile = prefs.debugToFile
-
 end
 
 -- *************************************************
@@ -55,7 +71,7 @@ function PluginInfoDialogSections.sectionsForBottomOfDialog(f, propertyTable)
         {
             bind_to_object = propertyTable,
 
-            title = "Piwigo Publisher Plugin Logging",
+            title = "Piwigo Publisher Plugin Logging and Preferences",
 
             f:row {
                 f:checkbox {
@@ -70,7 +86,7 @@ function PluginInfoDialogSections.sectionsForBottomOfDialog(f, propertyTable)
             f:row {
                 f:checkbox {
                     value = bind 'debugToFile',
-                    enabled = LrView.bind("debugEnabled"),    -- only allow if debug is enabled
+                    enabled = LrView.bind("debugEnabled"), -- only allow if debug is enabled
                 },
                 f:static_text {
                     title = "Log to file instead of console",
@@ -79,8 +95,8 @@ function PluginInfoDialogSections.sectionsForBottomOfDialog(f, propertyTable)
                 },
                 f:push_button {
                     title = "Show logfile",
-                    enabled = LrView.bind("debugEnabled"),    -- only allow if debug is enabled
-                    action = function (button)
+                    enabled = LrView.bind("debugEnabled"), -- only allow if debug is enabled
+                    action = function(button)
                         LrShell.revealInShell(utils.getLogfilePath())
                     end,
                 },
@@ -91,6 +107,32 @@ function PluginInfoDialogSections.sectionsForBottomOfDialog(f, propertyTable)
                     title = utils.getLogfilePath(),
                 },
             },
+            f:row {
+                spacing = f:control_spacing(),
+
+                f:push_button {
+                    title = "Reset Plugin Preferences…",
+
+                    action = function()
+                        local result = LrDialogs.confirm(
+                            "Reset Plugin Preferences",
+                            "This will delete all saved settings for this plugin.\n\nThis cannot be undone.",
+                            "Reset",
+                            "Cancel"
+                        )
+
+                        if result == 'ok' then
+                            resetPluginPrefs()
+                            LrDialogs.message(
+                                "Preferences Reset",
+                                "Plugin preferences have been cleared.",
+                                "info"
+                            )
+                        end
+                    end,
+                },
+            },
+
         },
     }
 end

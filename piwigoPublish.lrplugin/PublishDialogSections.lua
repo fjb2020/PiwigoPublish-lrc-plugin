@@ -27,7 +27,6 @@ PublishDialogSections = {}
 -- *************************************************
 function PublishDialogSections.startDialog(propertyTable)
 	log:info('PublishDialogSections.startDialog')
-	log:info('propertyTable\n' .. utils.serialiseVar(propertyTable))
 	if not propertyTable.LR_editingExistingPublishConnection then
 		propertyTable.userName = nil
 		propertyTable.userPW = nil
@@ -120,7 +119,7 @@ local function connectionDialog(f, propertyTable, pwInstance)
 				end,
 			},
 			f:push_button {
-				title = "Check connection",
+				title = "Check Connection",
 				enabled = bind('ConCheck', propertyTable),
 				font = "<system/bold>",
 				action = function()
@@ -231,35 +230,7 @@ local function prefsDialog(f, propertyTable)
 				},
 			},
 
-			f:spacer { height = 1 },
-			f:row {
-				f:push_button {
-					title = 'Create Special Collections',
-					font = "<system>",
-					width = share 'buttonwidth',
-					enabled = bind('Connected', propertyTable),
-					--enabled = false, -- temporary disabled
-					tooltip = "Create special publish collections for publish collection sets, allowing images to be published to Piwigo albums with sub-albums",
-					action = function(button)
-						local result = LrDialogs.confirm("Create Special Collections",
-							"Are you sure you want to create Special Collections?\nExisting collections may be updated and missing Piwigo albums will be created.",
-							"Create", "Cancel")
-						if result == 'ok' then
-							LrTasks.startAsyncTask(function()
-								PiwigoAPI.specialCollections(propertyTable)
-							end)
-						end
-					end,
-				},
-				f:static_text {
-					title = "Create special publish collections to allow images to be published to albums with sub-albums on Piwigo",
-					alignment = 'left',
-					font = "<system>",
-					-- width = share 'labelWidth',
-					-- width_in_chars = 50,
-					tooltip = "Create special collections to allow images to be published to Piwigo albums with sub-albums - which is not natively supported on LrC"
-				},
-			},
+
 
 			f:spacer { height = 1 },
 			f:row {
@@ -291,6 +262,62 @@ local function prefsDialog(f, propertyTable)
 				},
 			},
 
+			f:spacer { height = 1 },
+			f:row {
+				f:push_button {
+					title = 'Clone Existing Publish Service',
+					font = "<system>",
+					width = share 'buttonwidth',
+					enabled = bind('Connected', propertyTable),
+					--enabled = false, -- temporary disabled
+					tooltip = "Clone existing publish service (collections/sets and links to Piwigo)",
+					action = function(button)
+						LrTasks.startAsyncTask(function()
+							PWImportService.selectService(propertyTable)
+						end)
+					end,
+				},
+				f:static_text {
+					title = "Collection/Set structure and images of selected Publish Service will be cloned to this one.",
+					font = "<system>",
+					alignment = 'left',
+					-- width = share 'labelWidth',
+					-- width_in_chars = 50,
+					tooltip = "Selected Collection/Set structure and images of selected Publish Service will be cloned to this one."
+				},
+			},
+
+			f:spacer { height = 1 },
+
+			f:row {
+				f:push_button {
+					title = 'Create Special Collections',
+					font = "<system>",
+					width = share 'buttonwidth',
+					enabled = bind('Connected', propertyTable),
+					--enabled = false, -- temporary disabled
+					tooltip = "Create special publish collections for publish collection sets, allowing images to be published to Piwigo albums with sub-albums",
+					action = function(button)
+						local result = LrDialogs.confirm("Create Special Collections",
+							"Are you sure you want to create Special Collections?\nExisting collections may be updated and missing Piwigo albums will be created.",
+							"Create", "Cancel")
+						if result == 'ok' then
+							LrTasks.startAsyncTask(function()
+								PiwigoAPI.specialCollections(propertyTable)
+							end)
+						end
+					end,
+				},
+				f:static_text {
+					title = "Create special publish collections to allow images to be published to albums with sub-albums on Piwigo",
+					alignment = 'left',
+					font = "<system>",
+					-- width = share 'labelWidth',
+					-- width_in_chars = 50,
+					tooltip = "Create special collections to allow images to be published to Piwigo albums with sub-albums - which is not natively supported on LrC"
+				},
+			},
+			f:spacer { height = 1 },
 
 		},
 
@@ -379,6 +406,10 @@ local function prefsDialog(f, propertyTable)
 			font = "<system/bold>",
 			fill_horizontal = 1,
 			f:spacer { height = 1 },
+
+
+
+
 			f:row {
 				fill_horizontal = 1,
 				f:static_text {
@@ -409,7 +440,7 @@ local function prefsDialog(f, propertyTable)
 					value = bind 'syncCommentsPublish',
 				},
 			},
-						f:row {
+			f:row {
 				fill_horizontal = 1,
 				f:static_text {
 					title = "",
@@ -418,12 +449,12 @@ local function prefsDialog(f, propertyTable)
 				},
 				f:checkbox {
 					title = "Only include Published Photos",
-					enabled = bind ('syncCommentsPublish', propertyTable),
+					enabled = bind('syncCommentsPublish', propertyTable),
 					font = "<system>",
 					tooltip = "When checked, only photos being published will have comments synchronised",
 					value = bind 'syncCommentsPubOnly',
 				},
-			}
+			},
 
 
 		},

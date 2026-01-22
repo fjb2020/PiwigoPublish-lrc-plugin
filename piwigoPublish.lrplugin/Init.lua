@@ -49,6 +49,8 @@ _G.LrExportSettings = import "LrExportSettings"
 _G.JSON = require "JSON"
 _G.utils = require "utils"
 _G.PiwigoAPI = require "PiwigoAPI"
+_G.PWImportService = require "PWImportService"
+_G.PWStatusManager = require "PWStatusManager"
 
 -- Global initializations 
 _G.prefs = _G.LrPrefs.prefsForPlugin()
@@ -70,9 +72,7 @@ else
     log:disable()
 end
 
-_G.PiwigoBusy = false
-_G.RenderPhotos = false
 _G.iconPath = _PLUGIN:resourceId("icons/icon_med.png")
-_G.pluginVersion = "20260111.26"
+_G.pluginVersion = "20260122.27"
 --_G.LocStrings = utils.loadStrings()
 

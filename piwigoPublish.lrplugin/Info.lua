@@ -25,6 +25,7 @@ return {
     LrPluginName = "Piwigo Publisher",
     -- typo in PwigoPublish is noted but can't be changed without forcing all services using this plugin to be re-initialised.
     LrToolkitIdentifier = "fiona.boston.PwigoPublish",
+    -- LrToolkitIdentifier = "fiona.boston.PiwigoPublish",
     LrMetadataProvider  = 'CustomMetadata.lua',
     LrMetadataTagsetFactory = 'Tagset.lua',
     LrInitPlugin = "Init.lua",
@@ -34,6 +35,13 @@ return {
 		file = "PublishServiceProvider.lua",
 	},
 
+-- define custom metadata data for this plugin
+    PublishSettings = {
+        publishMetadata = {
+            { id = 'myCustomStatus', title = 'Status', type = 'string' },
+            { id = 'syncToken', title = 'Token', type = 'string' },
+        },
+    },
     
     LrLibraryMenuItems = {
         -- Menu items for Library -> Plug In Extras -> Piwigo Publisher
@@ -59,5 +67,5 @@ return {
     
 	LrPluginInfoProvider = 'PluginInfo.lua',
 
-    VERSION = { major=20260111, minor=26, revision=0 },
+    VERSION = { major=20260122, minor=27, revision=0 },
 }

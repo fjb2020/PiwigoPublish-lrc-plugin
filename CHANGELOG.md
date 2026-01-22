@@ -1,7 +1,16 @@
 # Changelog
+## [20260122.27] - 2026-01-22
+### Fixed
+#37 An error occurred while deleting images
+Fixed validation of Publish Service Description - now sets a default service name if left blank.
+Removed default collection that was created when a new publish service is created
+
+### Added
+Option to clone an existing publish service, retaining Piwigo connection if present
+Option to maintain public/private setting on albums
+
 ## [20260111.26] - 2026-01-09
 ### Fixed
-Fix #35 Comments Synchronisation feature request
 Fix #30 Cannot get tag list from Piwigo - error 401. Incorrect error message fixed.
 
 ### Added
