@@ -18,3 +18,6 @@ cat layout.odt
 deploy.sh
 diagnostic.txt
 copilot-instructions.md
+
+# i18n
+Localize_plugin.py

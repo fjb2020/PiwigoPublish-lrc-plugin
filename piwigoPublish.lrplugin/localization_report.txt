@@ -1,0 +1,325 @@
+Localization Report
+============================================================
+
+Plugin: D:\Gotcha\Documents\DIY\GitHub\LrC-PublishService\PiwigoPublish-lrc-plugin\piwigoPublish.lrplugin
+Files processed: 14
+Files modified: 9
+Total replacements: 63
+
+Detailed Changes:
+------------------------------------------------------------
+
+File: PublishDialogSections.lua
+  Original: "Piwigo Host Settings"
+  LOC Key:  "$$$/Piwigo/HostSettings/Title"
+  Count:    1
+
+File: PublishDialogSections.lua
+  Original: "Piwigo Host:"
+  LOC Key:  "$$$/Piwigo/HostSettings/PiwigoHost"
+  Count:    1
+
+File: PublishDialogSections.lua
+  Original: "User Name:"
+  LOC Key:  "$$$/Piwigo/HostSettings/UserName"
+  Count:    1
+
+File: PublishDialogSections.lua
+  Original: "Password:"
+  LOC Key:  "$$$/Piwigo/HostSettings/Password"
+  Count:    1
+
+File: PublishDialogSections.lua
+  Original: "Check connection"
+  LOC Key:  "$$$/Piwigo/HostSettings/CheckConnection"
+  Count:    1
+
+File: PublishDialogSections.lua
+  Original: "Piwigo Publish Service Configuration and Settings"
+  LOC Key:  "$$$/Piwigo/Config/Title"
+  Count:    1
+
+File: PublishDialogSections.lua
+  Original: "Publish Service Set Up"
+  LOC Key:  "$$$/Piwigo/Config/SetupTitle"
+  Count:    1
+
+File: PublishDialogSections.lua
+  Original: "Import existing albums from Piwigo"
+  LOC Key:  "$$$/Piwigo/Config/ImportAlbumsDesc"
+  Count:    1
+
+File: PublishDialogSections.lua
+  Original: "Import Piwigo Albums"
+  LOC Key:  "$$$/Piwigo/Config/ImportAlbumsConfirmTitle"
+  Count:    1
+
+File: PublishDialogSections.lua
+  Original: "Create Special Collections"
+  LOC Key:  "$$$/Piwigo/Config/CreateSpecialCollections"
+  Count:    1
+
+File: PublishDialogSections.lua
+  Original: "Create special publish collections to allow images to be published to albums with sub-albums on Piwigo"
+  LOC Key:  "$$$/Piwigo/Config/CreateSpecialCollectionsDesc"
+  Count:    1
+
+File: PublishDialogSections.lua
+  Original: "Check / link Piwigo Structure"
+  LOC Key:  "$$$/Piwigo/Config/CheckLinkStructureConfirmTitle"
+  Count:    1
+
+File: PublishDialogSections.lua
+  Original: "Piwigo structure will be checked against local collection / set structure. Missing Piwigo albums will be created and links checked / updated"
+  LOC Key:  "$$$/Piwigo/Config/CheckLinkStructureDesc"
+  Count:    1
+
+File: PublishDialogSections.lua
+  Original: "Piwigo structure will be checked against local collection / set structure. Missing Piwigo albums will be created and links checked / updated"
+  LOC Key:  "$$$/Piwigo/Config/CheckLinkStructureDesc"
+  Count:    1
+
+File: PublishDialogSections.lua
+  Original: "Metadata Settings"
+  LOC Key:  "$$$/Piwigo/Metadata/Title"
+  Count:    1
+
+File: PublishDialogSections.lua
+  Original: "Title: "
+  LOC Key:  "$$$/Piwigo/Metadata/TitleField"
+  Count:    1
+
+File: PublishDialogSections.lua
+  Original: "Description: "
+  LOC Key:  "$$$/Piwigo/Metadata/DescriptionField"
+  Count:    1
+
+File: PublishDialogSections.lua
+  Original: "Keyword Settings"
+  LOC Key:  "$$$/Piwigo/Keywords/Title"
+  Count:    1
+
+File: PublishDialogSections.lua
+  Original: "Include Full Keyword Hierarchy"
+  LOC Key:  "$$$/Piwigo/Keywords/IncludeFullHierarchy"
+  Count:    1
+
+File: PublishDialogSections.lua
+  Original: "If checked, all keywords in a keyword hierarchy will be sent to Piwigo"
+  LOC Key:  "$$$/Piwigo/Keywords/IncludeFullHierarchyTooltip"
+  Count:    1
+
+File: PublishDialogSections.lua
+  Original: "Include Keyword Synonyms"
+  LOC Key:  "$$$/Piwigo/Keywords/IncludeSynonyms"
+  Count:    1
+
+File: PublishDialogSections.lua
+  Original: "If checked, keyword synonyms will be sent to Piwigo"
+  LOC Key:  "$$$/Piwigo/Keywords/IncludeSynonymsTooltip"
+  Count:    1
+
+File: PublishDialogSections.lua
+  Original: "Other Settings"
+  LOC Key:  "$$$/Piwigo/OtherSettings/Title"
+  Count:    1
+
+File: PublishDialogSections.lua
+  Original: "Synchronise Album Descriptions"
+  LOC Key:  "$$$/Piwigo/OtherSettings/SyncAlbumDescriptions"
+  Count:    1
+
+File: PublishDialogSections.lua
+  Original: "If checked, Album descriptions will be maintainable in Lightroom and sent to Piwigo"
+  LOC Key:  "$$$/Piwigo/OtherSettings/SyncAlbumDescriptionsTooltip"
+  Count:    1
+
+File: PublishDialogSections.lua
+  Original: "Synchronise comments as part of a Publish Process"
+  LOC Key:  "$$$/Piwigo/OtherSettings/SyncCommentsOnPublish"
+  Count:    1
+
+File: PublishDialogSections.lua
+  Original: "When checked, comments will be synchronised for all photos in a collection during a publish operation"
+  LOC Key:  "$$$/Piwigo/OtherSettings/SyncCommentsOnPublishTooltip"
+  Count:    1
+
+File: PublishDialogSections.lua
+  Original: "Only include Published Photos"
+  LOC Key:  "$$$/Piwigo/OtherSettings/OnlyPublishedPhotos"
+  Count:    1
+
+File: PublishDialogSections.lua
+  Original: "When checked, only photos being published will have comments synchronised"
+  LOC Key:  "$$$/Piwigo/OtherSettings/OnlyPublishedPhotosTooltip"
+  Count:    1
+
+File: PluginInfoDialogSections.lua
+  Original: "Piwigo Publisher Plugin Logging"
+  LOC Key:  "$$$/Piwigo/PluginManager/LoggingTitle"
+  Count:    1
+
+File: PluginInfoDialogSections.lua
+  Original: "Enable debug logging"
+  LOC Key:  "$$$/Piwigo/PluginManager/EnableDebugLogging"
+  Count:    1
+
+File: PluginInfoDialogSections.lua
+  Original: "Log to file instead of console"
+  LOC Key:  "$$$/Piwigo/PluginManager/LogToFile"
+  Count:    1
+
+File: PluginInfoDialogSections.lua
+  Original: "Show logfile"
+  LOC Key:  "$$$/Piwigo/PluginManager/ShowLogfile"
+  Count:    1
+
+File: PluginInfoDialogSections.lua
+  Original: "Plugin Updates"
+  LOC Key:  "$$$/Piwigo/PluginManager/UpdatesTitle"
+  Count:    1
+
+File: PluginInfoDialogSections.lua
+  Original: "Check for Updates"
+  LOC Key:  "$$$/Piwigo/PluginManager/CheckForUpdates"
+  Count:    1
+
+File: PluginInfoDialogSections.lua
+  Original: "Visit GitHub Repository"
+  LOC Key:  "$$$/Piwigo/PluginManager/VisitGitHub"
+  Count:    1
+
+File: PublishTask.lua
+  Original: "Metadata Settings"
+  LOC Key:  "$$$/Piwigo/Metadata/Title"
+  Count:    1
+
+File: PublishTask.lua
+  Original: "Include Full Keyword Hierarchy"
+  LOC Key:  "$$$/Piwigo/Keywords/IncludeFullHierarchy"
+  Count:    1
+
+File: PublishTask.lua
+  Original: "If checked, all keywords in a keyword hierarchy will be sent to Piwigo"
+  LOC Key:  "$$$/Piwigo/Keywords/IncludeFullHierarchyTooltip"
+  Count:    1
+
+File: PublishTask.lua
+  Original: "Delete Album"
+  LOC Key:  "$$$/Piwigo/DeleteAlbum/Title"
+  Count:    2
+
+File: PublishTask.lua
+  Original: "Rename Failed"
+  LOC Key:  "$$$/Piwigo/Rename/Failed"
+  Count:    1
+
+File: PWSendMetadata.lua
+  Original: "Please select photos to resend metadata"
+  LOC Key:  "$$$/Piwigo/SendMetadata/SelectPhotos"
+  Count:    1
+
+File: PWSendMetadata.lua
+  Original: "Please select photos in a Piwigo Publisher service"
+  LOC Key:  "$$$/Piwigo/SendMetadata/SelectInService"
+  Count:    1
+
+File: PWSendMetadata.lua
+  Original: "Send Metadata to Piwigo"
+  LOC Key:  "$$$/Piwigo/SendMetadata/ConfirmTitle"
+  Count:    1
+
+File: PWSendMetadata.lua
+  Original: "Update Metadata..."
+  LOC Key:  "$$$/Piwigo/SendMetadata/Progress"
+  Count:    1
+
+File: PWSetAlbumCover.lua
+  Original: "Please select a photo to set as album cover"
+  LOC Key:  "$$$/Piwigo/AlbumCover/SelectPhoto"
+  Count:    1
+
+File: PWSetAlbumCover.lua
+  Original: "Please select a photo in a Piwigo Publisher service"
+  LOC Key:  "$$$/Piwigo/AlbumCover/SelectInService"
+  Count:    1
+
+File: PWSetAlbumCover.lua
+  Original: "Set Piwigo Album Cover"
+  LOC Key:  "$$$/Piwigo/AlbumCover/ConfirmTitle"
+  Count:    1
+
+File: PWCollToSet.lua
+  Original: "Please select photos to resend metadata"
+  LOC Key:  "$$$/Piwigo/SendMetadata/SelectPhotos"
+  Count:    1
+
+File: PWCollToSet.lua
+  Original: "Please select a Collection within a Piwigo Publisher service"
+  LOC Key:  "$$$/Piwigo/CollToSet/SelectCollection"
+  Count:    1
+
+File: PWCollToSet.lua
+  Original: "Special Collections cannot be converted to Collection Sets"
+  LOC Key:  "$$$/Piwigo/CollToSet/SpecialCantConvert"
+  Count:    1
+
+File: PWCollToSet.lua
+  Original: "Covert Publish Collection to Set"
+  LOC Key:  "$$$/Piwigo/CollToSet/ConfirmTitle"
+  Count:    1
+
+File: Info.lua
+  Original: "Set Piwigo Album Cover from Selected Photo"
+  LOC Key:  "$$$/Piwigo/Menu/SetAlbumCover"
+  Count:    1
+
+File: Info.lua
+  Original: "Send Metadata to Piwigo for Selected Photos"
+  LOC Key:  "$$$/Piwigo/Menu/SendMetadata"
+  Count:    1
+
+File: Info.lua
+  Original: "Convert selected Published Collection to Published Collection Set"
+  LOC Key:  "$$$/Piwigo/Menu/ConvertToSet"
+  Count:    1
+
+File: UpdateChecker.lua
+  Original: "Update Check Failed"
+  LOC Key:  "$$$/Piwigo/Update/CheckFailed"
+  Count:    3
+
+File: UpdateChecker.lua
+  Original: "Update Available"
+  LOC Key:  "$$$/Piwigo/Update/Available"
+  Count:    1
+
+File: UpdateChecker.lua
+  Original: "No Updates Available"
+  LOC Key:  "$$$/Piwigo/Update/NoUpdates"
+  Count:    1
+
+File: UpdateChecker.lua
+  Original: "Download Started"
+  LOC Key:  "$$$/Piwigo/Update/DownloadStarted"
+  Count:    1
+
+File: PiwigoAPI.lua
+  Original: "Import Piwigo Albums"
+  LOC Key:  "$$$/Piwigo/Config/ImportAlbumsConfirmTitle"
+  Count:    1
+
+File: PiwigoAPI.lua
+  Original: "Create Special Collections"
+  LOC Key:  "$$$/Piwigo/Config/CreateSpecialCollections"
+  Count:    2
+
+File: PiwigoAPI.lua
+  Original: "Please select a photo to set as album cover"
+  LOC Key:  "$$$/Piwigo/AlbumCover/SelectPhoto"
+  Count:    1
+
+File: PiwigoAPI.lua
+  Original: "Set Piwigo Album Cover"
+  LOC Key:  "$$$/Piwigo/AlbumCover/ConfirmTitle"
+  Count:    1
