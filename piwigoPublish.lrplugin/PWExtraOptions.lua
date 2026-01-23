@@ -20,6 +20,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
+require "UIHelpers"
+
 -- *************************************************
 -- Define a value_equal function for the popup_menu
 local function valueEqual(a, b)
@@ -64,31 +66,7 @@ local function main()
         local c = f:column {
             spacing = f:dialog_spacing(),
 
-            f:row {
-                    f:picture {
-                        alignment = 'left',
-                        value = iconPath,
-                    },
-                f:column {
-                    spacing = f:control_spacing(),
-                    f:spacer { height = 1 },
-                    f:row {
-                        f:static_text {
-                            title = "Piwigo Publisher Plugin",
-                            font = "<system/bold>",
-                            alignment = 'left',
-                            width = share 'labelWidth',
-                        },
-                    },
-                    f:row {
-                        f:static_text {
-                            title = "    Plugin Version " .. pluginVersion,
-                            alignment = 'left',
-                            width = share 'labelWidth',
-                        },
-                    },
-                },
-            },
+            UIHelpers.createPluginHeader(f, share, iconPath, pluginVersion),
 
             f:row {
                 spacing = f:label_spacing(),

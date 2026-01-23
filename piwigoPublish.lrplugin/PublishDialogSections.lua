@@ -22,6 +22,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ]]
 
+require "UIHelpers"
+
 PublishDialogSections = {}
 
 -- *************************************************
@@ -61,32 +63,7 @@ local function connectionDialog(f, propertyTable, pwInstance)
 		bind_to_object = propertyTable,
 
 		-- TOP: icon + version block
-		f:row {
-			f:picture {
-				alignment = 'left',
-				value = iconPath,
-				--value = _PLUGIN:resourceId("icons/icon_med.png"),
-			},
-			f:column {
-				spacing = f:control_spacing(),
-				f:spacer { height = 1 },
-				f:row {
-					f:static_text {
-						title = "Piwigo Publisher Plugin",
-						font = "<system/bold>",
-						alignment = 'left',
-						width = share 'labelWidth',
-					},
-				},
-				f:row {
-					f:static_text {
-						title = "    Plugin Version " .. pluginVersion,
-						alignment = 'left',
-						width = share 'labelWidth',
-					},
-				},
-			},
-		},
+		UIHelpers.createPluginHeader(f, share, iconPath, pluginVersion),
 
 		-- PW Host
 		f:spacer { height = 1 },
