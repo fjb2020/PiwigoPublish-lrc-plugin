@@ -28,12 +28,7 @@ local function CollToSet()
 
     local selPhotos =  catalog:getTargetPhotos()
     local sources = catalog:getActiveSources()
-    --[[
-    if utils.nilOrEmpty(selPhotos) then
-        LrDialogs.message("Please select photos to resend metadata","","warning")
-        return false
-    end
-    ]]
+
     -- is source a LrPublishedCollection or LrPublishedCollectionSet in selected published service
     local useService = nil
     local selectedCollection = nil
@@ -100,7 +95,7 @@ local function CollToSet()
     -- Set parent and remote id same as selected collection parent
     local newCollSet = PiwigoAPI.createPublishCollectionSet(catalog, useService, publishSettings, selCollName, catId, selColParent)
     if not newCollSet then
-        LrDialogs.message("CollToSet - Can't fcreate new collection set " .. selCollName,"","warning")
+        LrDialogs.message("CollToSet - Can't create new collection set " .. selCollName,"","warning")
         return false 
     end
     

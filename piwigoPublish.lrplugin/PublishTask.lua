@@ -24,40 +24,66 @@
 
 PublishTask = {}
 
-
 -- ************************************************
 function PublishTask.processRenderedPhotos(functionContext, exportContext)
-    log:info("PublishTask.processRenderedPhotos")
-    if PiwigoBusy then
-        return nil
-    end
-    PiwigoBusy = true
+    -- render photos and upload to Piwigo
 
+    log:info("PublishTask.processRenderedPhotos")
     local callStatus = {}
     local catalog = LrApplication.activeCatalog()
     local exportSession = exportContext.exportSession
     local propertyTable = exportContext.propertyTable
+
+    local publishedCollection = exportContext.publishedCollection
+    local publishService = publishedCollection:getService()
     local rv
+    if not publishService then
+        log:info('PublishTask.processRenderedPhotos - publishSettings:\n' .. utils.serialiseVar(propertyTable))
+        LrErrors.throwUserError('Publish photos to Piwigo - cannot connect find publishService')
+        return nil
+    end
+
+    local collectionInfo = publishedCollection:getCollectionInfoSummary()
+    local collectionSettings = collectionInfo.collectionSettings or {}
+    local collServiceState = {}
+    local serviceState = {}
+    if collectionSettings then
+        collServiceState = collectionSettings.serviceState or {}
+    end
+    -- serviceState is a table containing publishService specific statusData
+    if collServiceState then
+        serviceState = collServiceState
+    else
+        serviceState = PWStatusManager.getServiceState(publishService)
+    end
+    log:info("PublishTask.processRenderedPhotos - serviceState " .. utils.serialiseVar(serviceState))
+    if serviceState.isCloningSync then
+        PWStatusManager.setisCloningSync(publishService, false)
+        -- use minimal render photos for smart collection cloning
+        PublishTask.processCloneSync(functionContext, exportContext)
+        return
+    end
+    if serviceState.PiwigoBusy then
+        return nil
+    end
+    PWStatusManager.setPiwigoBusy(publishService, true)
+
     -- Set progress title.
     local nPhotos = exportSession:countRenditions()
     local progressScope = exportContext:configureProgress {
         title = "Publishing " .. nPhotos .. " photos to " .. propertyTable.host
     }
-
     -- check connection to piwigo
     if not (propertyTable.Connected) then
         rv = PiwigoAPI.login(propertyTable)
         if not rv then
             log:info('PublishTask.processRenderedPhotos - publishSettings:\n' .. utils.serialiseVar(propertyTable))
-            PiwigoBusy = false
+            PWStatusManager.setPiwigoBusy(publishService, false)
             LrErrors.throwUserError('Publish photos to Piwigo - cannot connect to piwigo at ' .. propertyTable.host)
             return nil
         end
     end
 
-    local publishedCollection = exportContext.publishedCollection
-    local collectionInfo = publishedCollection:getCollectionInfoSummary()
-    local collectionSettings = collectionInfo.collectionSettings
     -- log:info('PublishTask.processRenderedPhotos - collectionInfo:\n' .. utils.serialiseVar(collectionInfo))
     local parentCollSet = publishedCollection:getParent()
     local parentID = ""
@@ -71,7 +97,6 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
     local albumId = publishedCollection:getRemoteId()
     local albumUrl = publishedCollection:getRemoteUrl()
 
-
     local requestRepub = false
     if parentCollSet then
         parentID = parentCollSet:getRemoteId()
@@ -81,7 +106,7 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
     if albumId then
         rv, checkCats = PiwigoAPI.pwCategoriesGet(propertyTable, albumId)
         if not rv then
-            PiwigoBusy = false
+            PWStatusManager.setPiwigoBusy(publishService, false)
             LrErrors.throwUserError('Publish photos to Piwigo - cannot check category exists on piwigo at ' ..
                 propertyTable.host)
             return nil
@@ -102,7 +127,7 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
             LrDialogs.message("*** Missing Piwigo album ***", albumName .. ", Piwigo Cat ID " .. albumId .. " created")
             requestRepub = true
         else
-            PiwigoBusy = false
+            PWStatusManager.setPiwigoBusy(publishService, false)
             LrErrors.throwUserError('Publish photos to Piwigo - cannot create Piwigo album for  ' .. albumName)
             return nil
         end
@@ -112,9 +137,8 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
     local renditionParams = {
         stopIfCanceled = true,
     }
-    -- flag to allow sync comments to manage process
-    RenderPhotos = true
-
+    -- flag to allow sync comments to manage process in PublishTask.getCommentsFromPublishedCollection
+    PWStatusManager.setRenderPhotos(publishService, true)
 
     -- now wait for photos to be exported and then upload to Piwigo
     for i, rendition in exportContext:renditions(renditionParams) do
@@ -125,15 +149,19 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
             log:info("PublishTask.processRenderedPhotos - resetting Piwigo connection after 75 uploads")
             rv = PiwigoAPI.login(propertyTable)
             if not rv then
-                PiwigoBusy = false
-                log:info("PublishTask.processRenderedPhotos - renditionSettings\n" .. utils.serialiseVar(renditionParams))
-                LrErrors.throwUserError('Publish photos to Piwigo - cannot connect to piwigo at ' .. propertyTable.host)
+                PWStatusManager.setPiwigoBusy(publishService, false)
+                PWStatusManager.setRenderPhotos(publishService, false)
+                log:info("PublishTask.processRenderedPhotos - renditionSettings\n" ..
+                    utils.serialiseVar(renditionParams))
+                LrErrors.throwUserError('Publish photos to Piwigo - cannot connect to piwigo at ' ..
+                    propertyTable.host)
                 break
             end
         end
 
         local lrPhoto = rendition.photo
         local remoteId = rendition.publishedPhotoId or ""
+<<<<<<< HEAD
         
         -- Detect photo already published in this service (multi-album support)
         local existingPwImageId = nil
@@ -171,9 +199,11 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
             end
         end
         
+=======
+
+>>>>>>> main
         -- Wait for next photo to render.
         local success, pathOrMessage = rendition:waitForRender()
-
         -- Check for cancellation again after photo has been rendered.
         if progressScope:isCanceled() then
             if LrFileUtils.exists(pathOrMessage) then
@@ -183,7 +213,7 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
         end
 
         if success then
-            -- photo has been exported to temporary location - upload to piwigo
+            -- upload to Piwigo
             callStatus = {}
             local filePath = pathOrMessage
             
@@ -223,21 +253,24 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
                 rendition:recordPublishedPhotoUrl(callStatus.remoteurl or "")
                 rendition:renditionIsDone(true)
                 -- set metadata for photo
+                local pluginData = {
+                    pwHostURL = propertyTable.host,
+                    albumName = albumName,
+                    albumUrl = albumUrl,
+                    imageUrl = callStatus.remoteurl,
+                    pwUploadDate = os.date("%Y-%m-%d"),
+                    pwUploadTime = os.date("%H:%M:%S"),
+                    pwCommentSync = ""
+                }
+                if propertyTable.syncCommentsPublish then
+                    -- set to allow comments to sync for this photo if flag set
+                    pluginData.pwCommentSync = "YES"
+                end
 
-                catalog:withWriteAccessDo("Updating " .. lrPhoto:getFormattedMetadata("fileName"),
-                    function()
-                        lrPhoto:setPropertyForPlugin(_PLUGIN, "pwHostURL", propertyTable.host)
-                        lrPhoto:setPropertyForPlugin(_PLUGIN, "pwAlbumName", albumName)
-                        lrPhoto:setPropertyForPlugin(_PLUGIN, "pwAlbumURL", albumUrl)
-                        lrPhoto:setPropertyForPlugin(_PLUGIN, "pwImageURL", callStatus.remoteurl)
-                        lrPhoto:setPropertyForPlugin(_PLUGIN, "pwUploadDate", os.date("%Y-%m-%d"))
-                        lrPhoto:setPropertyForPlugin(_PLUGIN, "pwUploadTime", os.date("%H:%M:%S"))
+                -- store / update custom metadata
 
-                        if propertyTable.syncCommentsPublish then
-                            -- set to allow comments to sync for this photo if flag set
-                            lrPhoto:setPropertyForPlugin(_PLUGIN, "pwCommentSync", "YES")
-                        end
-                    end)
+
+                PiwigoAPI.storeMetaData(catalog, lrPhoto, pluginData)
 
                 -- photo was uploaded with keywords included, but existing keywords aren't replaced by this process,
                 -- so force a metadata update using pwg.images.setInfo with single_value_mode set to "replace" to force old metadata/keywords to be replaced
@@ -256,6 +289,7 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
             else
                 rendition:uploadFailed(callStatus.message or "Upload failed")
             end
+
             -- When done with photo, delete temp file.
             LrFileUtils.delete(pathOrMessage)
             end -- end if not existingPwImageId
@@ -264,32 +298,70 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
         end
     end
     progressScope:done()
+    PWStatusManager.setPiwigoBusy(publishService, false)
+end
+
+-- ************************************************
+function PublishTask.processCloneSync(functionContext, exportContext)
+    -- minimal render function for service cloning
+    log:info("PublishTask.processCloneSync")
+    local exportSession = exportContext.exportSession
+    local propertyTable = exportContext.propertyTable
+
+    local publishedCollection = exportContext.publishedCollection
+    local publishService = publishedCollection:getService()
 
 
-    PiwigoBusy = false
-    -- Check if republishRequested
-    if requestRepub then
-        -- LrDialogs.message("*** Missing Piwigo Album Recreated ***", "Please rePublish all photos in " .. albumName)
-        --[[
-        ToDo
-        -- trigger republish of all photos in this album - missing Piwigo Album was created
-        local repub = LrDialogs.confirm("rePublish Required",  "Do you wish to republish all photos in " .. albumName, "Yes", "No" )
-        log:info("PublishTask.processRenderedPhotos - republish requested " .. repub)
-        if repub == "ok" then
-            -- mark each photo in collection as publishedPhoto:setEditedFlag( edited ) to trigger a republish
-            -- Must be called from within one of the catalog:with___WriteAccessDo gates (including withPrivateWriteAccessDo).
+    local collectionInfo = publishedCollection:getCollectionInfoSummary()
+    local collectionSettings = collectionInfo.collectionSettings or {}
+    local collServiceState = {}
+    local serviceState = {}
+    if collectionSettings then
+        collServiceState = collectionSettings.serviceState or {}
+    end
+
+    local collId = publishedCollection.localIdentifier
+    local remoteInfoTable = collServiceState.RemoteInfoTable[collId] or {}
+
+    local renditionParams = {
+        stopIfCanceled = true,
+    }
+    for _, rendition in exportContext:renditions(renditionParams) do
+        --rendition:skipRender()
+        local lrPhoto = rendition.photo
+        local photoId = lrPhoto.localIdentifier
+        log:info("PublishTask.processCloneSync - photo " .. lrPhoto:getFormattedMetadata("fileName"))
+
+        local success, pathOrMessage = rendition:waitForRender()
+        if not success then
+            rendition:renditionIsDone(false, pathOrMessage)
+            return
         end
-        ]]
+        if LrFileUtils.exists(pathOrMessage) then
+            LrFileUtils.delete(pathOrMessage)
+        end
+        -- extract remoteid and url
+        local remoteInfo = remoteInfoTable[photoId]
+        local remoteId = ""
+        local remoteUrl = ""
+        if remoteInfo then
+            remoteId = remoteInfo.remoteId or ""
+            remoteUrl = remoteInfo.remoteUrl or ""
+        end
+
+        if remoteId == "" then
+            rendition:uploadFailed("Render failed - No remote id found")
+        else
+            rendition:recordPublishedPhotoId(remoteId)
+            rendition:recordPublishedPhotoUrl(remoteUrl or "")
+            rendition:renditionIsDone(true)
+        end
     end
 end
 
 -- ************************************************
 function PublishTask.deletePhotosFromPublishedCollection(publishSettings, arrayOfPhotoIds, deletedCallback,
                                                          localCollectionId)
-    if PiwigoBusy then
-        return nil
-    end
-    PiwigoBusy = true
     local callStatus = {}
     local errStatus = ""
 
@@ -298,6 +370,20 @@ function PublishTask.deletePhotosFromPublishedCollection(publishSettings, arrayO
     local catalog = LrApplication.activeCatalog()
     local publishedCollection = catalog:getPublishedCollectionByLocalIdentifier(localCollectionId)
     local publishedPhotos = publishedCollection:getPublishedPhotos()
+    local publishService = publishedCollection:getService()
+    if not publishService then
+        log:info('deletePhotosFromPublishedCollection - publishSettings:\n' .. utils.serialiseVar(publishSettings))
+        LrErrors.throwUserError('Publish photos to Piwigo - cannot connect find publishService')
+        return nil
+    end
+    -- serviceState is a global table containing publishService specific statusData
+    local serviceState = PWStatusManager.getServiceState(publishService)
+    if serviceState.PiwigoBusy then
+        return nil
+    end
+    PWStatusManager.setPiwigoBusy(publishService, true)
+
+    -- build lookup table to access photos by remoteId
     local photosToUnpublish = {}
     local pubPhotoByRemoteID = {}
     for _, pubPhoto in pairs(publishedPhotos) do
@@ -305,24 +391,28 @@ function PublishTask.deletePhotosFromPublishedCollection(publishSettings, arrayO
     end
 
     -- build table of photo objects for each item in arrayofphotoids
+    local arrayPos = 1
     for i = 1, #arrayOfPhotoIds do
-        local pwImageID = arrayOfPhotoIds[i]
-        local pubPhoto = pubPhotoByRemoteID[pwImageID]
-        local lrphoto = pubPhoto:getPhoto()
-        photosToUnpublish[i] = {}
-        photosToUnpublish[i][1] = lrphoto
-        photosToUnpublish[i][2] = pwImageID
-        photosToUnpublish[i][3] = pubPhoto
+        local pwImageID = arrayOfPhotoIds[i] or nil
+        if pwImageID then
+            local pubPhoto = pubPhotoByRemoteID[pwImageID]
+            local lrphoto = pubPhoto:getPhoto()
+            photosToUnpublish[arrayPos] = {}
+            photosToUnpublish[arrayPos][1] = lrphoto
+            photosToUnpublish[arrayPos][2] = pwImageID
+            photosToUnpublish[arrayPos][3] = pubPhoto
+            arrayPos = arrayPos + 1
+        end
     end
 
+    -- piwigo album id
     local pwCatID = publishedCollection:getRemoteId()
-
 
     -- check connection to piwigo
     if not (publishSettings.Connected) then
         local rv = PiwigoAPI.login(publishSettings)
         if not rv then
-            PiwigoBusy = false
+            PWStatusManager.setPiwigoBusy(publishService, false)
             LrErrors.throwUserError('Delete Photos from Collection - cannot connect to piwigo at ' .. publishSettings
                 .url)
             return nil
@@ -341,6 +431,7 @@ function PublishTask.deletePhotosFromPublishedCollection(publishSettings, arrayO
             log:info("PublishTask.deletePhotosFromPublishedCollection - dissociating photo " .. thispwImageID .. " from category " .. pwCatID)
             callStatus = PiwigoAPI.dissociateImageFromCategory(publishSettings, thispwImageID, pwCatID)
             if callStatus.status then
+<<<<<<< HEAD
                 -- Only clear metadata if photo is no longer in any other published collection
                 -- Check if photo exists in other collections of this service
                 local publishService = publishedCollection:getService()
@@ -362,9 +453,21 @@ function PublishTask.deletePhotosFromPublishedCollection(publishSettings, arrayO
                 else
                     log:info("PublishTask.deletePhotosFromPublishedCollection - photo " .. thispwImageID .. " still in other collections, keeping metadata")
                 end
+=======
+                local pluginData = {
+                    pwHostURL = "",
+                    albumName = "",
+                    albumUrl = "",
+                    imageUrl = "",
+                    pwUploadDate = "",
+                    pwUploadTime = "",
+                    pwCommentSync = ""
+                }
+                PiwigoAPI.storeMetaData(catalog, thisLrPhoto, pluginData)
+>>>>>>> main
                 thisPhotoToUnpublish[4] = true
             else
-                PiwigoBusy = false
+                PWStatusManager.setPiwigoBusy(publishService, false)
                 LrErrors.throwUserError(
                     'Failed to delete photo ' .. thispwImageID .. ' from Piwigo - ' .. callStatus.statusMsg,
                     'Failed to delete photo')
@@ -378,12 +481,14 @@ function PublishTask.deletePhotosFromPublishedCollection(publishSettings, arrayO
         deletedCallback(thispwImageID)
     end
 
-    PiwigoBusy = false
+
+    PWStatusManager.setPiwigoBusy(publishService, false)
 end
 
 -- ************************************************
 function PublishTask.getCommentsFromPublishedCollection(publishSettings, arrayOfPhotoInfo, commentCallback)
     log:info("PublishTask.getCommentsFromPublishedCollection")
+
     --[[
     This callback is invoked in the following situations:
     1 - For every photo in the Published Collection whenever any photo in that collection is published or re-published.
@@ -391,16 +496,26 @@ function PublishTask.getCommentsFromPublishedCollection(publishSettings, arrayOf
     3 - After the user adds a new comment to a photo in the Library module ▸ Comments panel.
 ]]
 
-    -- check PiwigoBusy flag
-    if PiwigoBusy then
+    local rv, publishService = PiwigoAPI.getPublishService(publishSettings)
+    if not (publishService) or not (rv) then
+        log:info('PublishTask.getCommentsFromPublishedCollection - publishSettings:\n' ..
+            utils.serialiseVar(publishSettings))
+        LrErrors.throwUserError('PublishTask.getCommentsFromPublishedCollection - cannot find publishService')
+        return nil
+    end
+    -- serviceState is a global table containing publishService specific statusData
+    local serviceState = PWStatusManager.getServiceState(publishService)
+    local serviceId = publishService.localIdentifier
+    -- check serviceState.PiwigoBusy flag
+    if serviceState.PiwigoBusy then
         utils.pwBusyMessage("PublishTask.getCommentsFromPublishedCollection", "Sync Comments")
         return
     end
 
     -- check if being called by processRenderedPhotos
     local syncPubOnly = false
-    if RenderPhotos then
-        RenderPhotos = false
+    if serviceState.RenderPhotos then
+        PWStatusManager.setRenderPhotos(publishService, false)
         -- should we sync comments as part of the processRenderedPhotos operation
         if not (publishSettings.syncCommentsPublish) then
             log:info("PublishTask.getCommentsFromPublishedCollection - syncComments not enabled for publish")
@@ -412,8 +527,6 @@ function PublishTask.getCommentsFromPublishedCollection(publishSettings, arrayOf
         end
     end
 
-
-
     local catalog = LrApplication.activeCatalog()
     -- loop through all photos to check for any with pwCommentSync set to "NO"
     for i, photoInfo in ipairs(arrayOfPhotoInfo) do
@@ -423,7 +536,9 @@ function PublishTask.getCommentsFromPublishedCollection(publishSettings, arrayOf
         -- assume to sync comments for all photos in arrayofphotoids
         local syncThisPhoto = true
         if syncPubOnly then
-            -- syncPubOnly will be set to true if getCommentsFromPublishedCollection has been called following processRenderedPhotos and user has checked the option to enable this
+            -- syncPubOnly will be set to true if getCommentsFromPublishedCollection has been called following processRenderedPhotos
+            -- and user has checked the option Only Include Published Photos
+            -- "pwCommentSync" gets set to YES by the renderphotos process indicating this photo is part of the latest publish process
             local commentSync = thisLrPhoto:getPropertyForPlugin(_PLUGIN, "pwCommentSync")
             if commentSync == "YES" then
                 -- reset metadata
@@ -487,15 +602,25 @@ function PublishTask.addCommentToPublishedPhoto(publishSettings, remotePhotoId, 
     return rv
 end
 
-
 -- ************************************************
 function PublishTask.didCreateNewPublishService(publishSettings, info)
-
+    log:info("PublishTask.didCreateNewPublishService")
+    -- remove default collection if present
+    local catalog = LrApplication.activeCatalog()
+    local publishService = info.publishService
+    local childCollections = publishService:getChildCollections() or {}
+    for i, childColl in pairs(childCollections) do
+        if childColl:getName() == "default" then
+            catalog:withWriteAccessDo("Delete default collection", function()
+                childColl:delete()
+            end)
+        end
+    end
 end
 
 -- ************************************************
 function PublishTask.didUpdatePublishService(publishSettings, info)
-
+    log:info("PublishTask.didUpdatePublishService")
 end
 
 -- ************************************************
@@ -527,9 +652,6 @@ end
 -- ************************************************
 function PublishTask.validatePublishedCollectionName(name)
     log:info("PublishTask.validatePublishedCollectionName")
-    if PiwigoBusy then
-        return false, "Piwigo Publisher is busy. Please try later."
-    end
     -- look for [ and ]
     if string.sub(name, 1, 1) == "[" or string.sub(name, -1) == "]" then
         return false, "Cannot use [ ] at start and end of album name - clashes with special collections"
@@ -669,7 +791,7 @@ function PublishTask.viewForCollectionSettings(f, publishSettings, info)
                     height_in_lines = 4,
                 },
             },
-            --[[
+
             f:row {
                 f:checkbox {
                     title = "Album is Private",
@@ -677,7 +799,7 @@ function PublishTask.viewForCollectionSettings(f, publishSettings, info)
                     value = bind 'albumPrivate',
                 }
             }
-            ]]
+
         }
     }
 
@@ -772,9 +894,22 @@ function PublishTask.updateCollectionSettings(publishSettings, info)
     -- We use it for the creation of new collections to create a corresponding album on Piwigo
     -- and to update album description on existing albums if set
 
+    local metaData = {}
+    local CollectionName = info.name
+    local Collection = info.publishedCollection
+    local publishService = info.publishService
 
+
+    if not publishService then
+        log:info('updateCollectionSettings - publishSettings:\n' .. utils.serialiseVar(publishSettings))
+        LrErrors.throwUserError('updateCollectionSettings - cannot connect find publishService')
+        return nil
+    end
+    -- serviceState is a global table containing publishService specific statusData
+    local serviceState = PWStatusManager.getServiceState(publishService)
+    local serviceId = publishService.localIdentifier
     log:info("PublishTask.updateCollectionSettings")
-    if PiwigoBusy then
+    if serviceState.PiwigoBusy then
         -- pwigo processing another request - throw error
         error("Piwigo Publisher is busy. Please try later.")
     end
@@ -784,9 +919,7 @@ function PublishTask.updateCollectionSettings(publishSettings, info)
         statusMsg = ""
     }
 
-    local metaData = {}
-    local CollectionName = info.name
-    local Collection = info.publishedCollection
+
 
     local collectionSettings = assert(info.collectionSettings)
     -- piwigo album settings
@@ -949,7 +1082,7 @@ function PublishTask.viewForCollectionSetSettings(f, publishSettings, info)
                     height_in_lines = 4,
                 },
             },
-            --[[
+
             f:row {
                 f:checkbox {
                     title = "Album is Private",
@@ -957,7 +1090,6 @@ function PublishTask.viewForCollectionSetSettings(f, publishSettings, info)
                     value = bind 'albumPrivate',
                 }
             }
-            ]]
         }
     }
 
@@ -975,8 +1107,19 @@ function PublishTask.updateCollectionSetSettings(publishSettings, info)
     -- We use it only for the creation of new collections to create a corresponding album on Piwigo
     -- therefore we need to check if the associated piwigo album already exists and do nothing if so
     log:info("PublishTask.updateCollectionSetSettings")
+    local CollectionName = info.name
+    local Collection = info.publishedCollection
+    local publishService = info.publishService
 
-    if PiwigoBusy then
+    if not publishService then
+        log:info('updateCollectionSettings - publishSettings:\n' .. utils.serialiseVar(publishSettings))
+        LrErrors.throwUserError('updateCollectionSettings - cannot connect find publishService')
+        return nil
+    end
+    -- serviceState is a global table containing publishService specific statusData
+    local serviceState = PWStatusManager.getServiceState(publishService)
+    local serviceId = publishService.localIdentifier
+    if serviceState.PiwigoBusy then
         -- pwigo processing another request - throw error
         error("Piwigo Publisher is busy. Please try later.")
     end
@@ -986,8 +1129,7 @@ function PublishTask.updateCollectionSetSettings(publishSettings, info)
     }
 
 
-    local CollectionName = info.name
-    local Collection = info.publishedCollection
+
     local collectionSettings = assert(info.collectionSettings)
     local remoteId = Collection:getRemoteId()
     local name = info.name
@@ -1064,14 +1206,22 @@ function PublishTask.reparentPublishedCollection(publishSettings, info)
     -- ablums being rearranged in publish service
     -- neee to reflect this in piwigo
     log:info("PublishTask.reparentPublishedCollection")
-    log:info("info\n" .. utils.serialiseVar(info))
-    if PiwigoBusy then
+
+    local publishService = info.publishService
+    if not publishService then
+        log:info('reparentPublishedCollection - publishSettings:\n' .. utils.serialiseVar(publishSettings))
+        LrErrors.throwUserError('reparentPublishedCollection - cannot connect find publishService')
+        return nil
+    end
+    -- serviceState is a global table containing publishService specific statusData
+    local serviceState = PWStatusManager.getServiceState(publishService)
+    local serviceId = publishService.localIdentifier
+    if serviceState.PiwigoBusy then
         -- pwigo processing another request - throw error
         error("Piwigo Publisher is busy. Please try later.")
     end
 
     -- check for special collection and prevent change if so
-    local publishService = info.publishService
     local publishCollection = info.publishedCollection
 
     -- check for special collections and do not delete Piwigo album if so
@@ -1109,7 +1259,14 @@ function PublishTask.renamePublishedCollection(publishSettings, info)
     local callStatus = {}
     callStatus.status = false
     -- called for both collections and collectionsets
-
+    local publishService = info.publishService
+    if not publishService then
+        log:info('renamePublishedCollection - publishSettings:\n' .. utils.serialiseVar(publishSettings))
+        LrErrors.throwUserError('renamePublishedCollection - cannot connect find publishService')
+        return nil
+    end
+    -- serviceState is a global table containing publishService specific statusData
+    local serviceState = PWStatusManager.getServiceState(publishService)
     local remoteId = info.remoteId
     local newName = info.name
     local collection = info.publishedCollection
@@ -1130,14 +1287,14 @@ function PublishTask.renamePublishedCollection(publishSettings, info)
     else
         metaData.status = "public"
     end
-
+    local serviceId = publishService.localIdentifier
     if string.sub(oldName, 1, 1) == "[" and string.sub(oldName, -1) == "]" then
         callStatus.statusMsg = "Cannot re-name a special collection"
     else
         if utils.nilOrEmpty(remoteId) then
             callStatus.statusMsg = "no album found on Piwigo"
         else
-            if PiwigoBusy then
+            if serviceState.PiwigoBusy then
                 callStatus.statusMsg = "Piwigo Publisher is busy. Please try later."
             else
                 callStatus = PiwigoAPI.pwCategoriesSetinfo(publishSettings, info, metaData)
@@ -1182,9 +1339,17 @@ end
 -- ************************************************
 function PublishTask.deletePublishedCollection(publishSettings, info)
     log:info("PublishTask.deletePublishedCollection")
-    log:info("info\n" .. utils.serialiseVar(info))
 
-    if PiwigoBusy then
+    local publishService = info.publishService
+    local publishCollection = info.publishedCollection
+    if not publishService then
+        log:info('deletePublishedCollection - publishSettings:\n' .. utils.serialiseVar(publishSettings))
+        LrErrors.throwUserError('deletePublishedCollection - cannot connect find publishService')
+        return nil
+    end
+    -- serviceState is a global table containing publishService specific statusData
+    local serviceState = PWStatusManager.getServiceState(publishService)
+    if serviceState.PiwigoBusy then
         -- pwigo processing another request - throw error
         error("Piwigo Publisher is busy. Please try later.")
     end
@@ -1194,8 +1359,7 @@ function PublishTask.deletePublishedCollection(publishSettings, info)
     local callStatus = {}
     callStatus.status = false
     local catToDelete = info.remoteId
-    local publishService = info.publishService
-    local publishCollection = info.publishedCollection
+
 
 
     -- check for special collections and do not delete Piwigo album if so
@@ -1216,14 +1380,14 @@ function PublishTask.deletePublishedCollection(publishSettings, info)
             local photosInCollection = publishCollection:getPublishedPhotos()
             for p, thisPhoto in pairs(photosInCollection) do
                 log:info("PublishTask.deletePublishedCollection - delete photo " .. thisPhoto:getRemoteId())
-                local pwImageID = thisPhoto:getRemoteId()
-                local rtnStatus = PiwigoAPI.deletePhoto(publishSettings, thisRemoteId, pwImageID, callStatus)
+                local pwImageID = thisPhoto:getRemoteId() or ""
+                if pwImageID ~= "" then
+                    -- delete photo from piwigo
+                    local rtnStatus = PiwigoAPI.deletePhoto(publishSettings, thisRemoteId, pwImageID, callStatus)
+                end
             end
         end
-
-
         --LrDialogs.message("Delete Album","Special Collection - no Piwigo album to delete.", "warning")
-
         return true
     end
 
@@ -1237,4 +1401,16 @@ function PublishTask.deletePublishedCollection(publishSettings, info)
         rv = PiwigoAPI.pwCategoriesDelete(publishSettings, info, metaData, callStatus)
     end
     return true
+end
+
+-- ************************************************
+function PublishTask.goToPublishedCollection(publishSettings, info)
+    log:info("PublishTask.goToPublishedCollection")
+    --local remoteId = info.remoteId or ""
+end
+
+-- ************************************************
+function PublishTask.goToPublishedPhoto(publishSettings, info)
+    log:info("PublishTask.goToPublishedPhoto")
+    --local remoteId = info.remoteId or ""
 end

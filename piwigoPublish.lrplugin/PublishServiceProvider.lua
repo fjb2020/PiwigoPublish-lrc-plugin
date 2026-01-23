@@ -1,4 +1,4 @@
---[[ 
+--[[
 	
 	PublishServiceProvider.lua
 	
@@ -26,18 +26,18 @@ require "PublishDialogSections"
 require "PublishTask"
 
 return {
-	
--- Dialog Settings
+
+	-- Dialog Settings
 	startDialog = PublishDialogSections.startDialog,
 	sectionsForTopOfDialog = PublishDialogSections.sectionsForTopOfDialog,
 	sectionsForBottomOfDialog = PublishDialogSections.sectionsForBottomOfDialog,
 	endDialog = PublishDialogSections.endDialog,
 
-	hideSections = { 'exportLocation' }, 
-	
+	hideSections = { 'exportLocation' },
 
--- Behaviour Settings
-	allowFileFormats = { "JPEG" , "PNG"},
+
+	-- Behaviour Settings
+	allowFileFormats = { "JPEG", "PNG" },
 	allowColorSpaces = nil,
 	canExportVideo = false,
 	supportsCustomSortOrder = false,
@@ -47,19 +47,19 @@ return {
 
 	-- these fields are stored in the publish service settings by Lightroom
 	exportPresetFields = {
-		{ key = 'host', default = '' },
-		{ key = "userName", default = '' },
-		{ key = "userPW", default = '' },
-		{ key = "KwFullHierarchy", default = true},
-		{ key = "KwSynonyms", default = true},
-		{ key = "mdTitle", default = "{{title}}"},
-		{ key = "mdDescription", default = "{{caption}}"},
-		{ key = "syncAlbumDescriptions", default = false},
-		{ key = "syncCommentsPublish", default = true},
-		{ key = "syncCommentsPubOnly", default = false}
-		
+		{ key = 'host',                  default = '' },
+		{ key = "userName",              default = '' },
+		{ key = "userPW",                default = '' },
+		{ key = "KwFullHierarchy",       default = true },
+		{ key = "KwSynonyms",            default = true },
+		{ key = "mdTitle",               default = "{{title}}" },
+		{ key = "mdDescription",         default = "{{caption}}" },
+		{ key = "syncAlbumDescriptions", default = false },
+		{ key = "syncCommentsPublish",   default = true },
+		{ key = "syncCommentsPubOnly",   default = false }
+
 	},
---[[
+	--[[
 	metadataThatTriggersRepublish = {
 		default = false,
 		title = true,
@@ -69,40 +69,47 @@ return {
 		dateCreated = true,
     },
 ]]
-    -- canExportToTemporaryLocation = true 
-	-- canExportToTemporaryLocation = true 
+	-- canExportToTemporaryLocation = true
+	-- canExportToTemporaryLocation = true
 	-- showSections = { 'fileNaming', 'fileSettings', etc... }
 
--- UI Settings
-	small_icon = '/icons/icon_small.png',
-	titleForPublishedCollection = 'Piwigo album',
-	titleForPublishedCollectionSet = 'Piwigo album (Set for sub-albums)',
-	titleForPublishedSmartCollection = 'Piwigo album (Smart collection)',
-	titleForGoToPublishedCollection = "Go to Album in Piwigo",
-	titleForGoToPublishedPhoto= "Go to Photo in Piwigo",
+	-- UI Settings
+	small_icon                                       = '/icons/icon_small.png',
+	titleForPublishedCollection                      = 'Piwigo album',
+	titleForPublishedCollectionSet                   = 'Piwigo album (Set for sub-albums)',
+	titleForPublishedSmartCollection                 = 'Piwigo album (Smart collection)',
+	titleForGoToPublishedCollection                  = "Go to Album in Piwigo",
+	titleForGoToPublishedPhoto                       = "Go to Photo in Piwigo",
 	-- titleForPublishedCollectionSet_standalone = ""
 	-- titleForPublishedCollection_standalone = ""
 	-- titleForPublishedSmartCollection_standalone = ""
 
--- Images Processing function
-	processRenderedPhotos = PublishTask.processRenderedPhotos,
-	canAddCommentsToService = PublishTask.PublishTaskcanAddCommentsToService,
-	addCommentToPublishedPhoto = PublishTask.addCommentToPublishedPhoto,
-	getCommentsFromPublishedCollection = PublishTask.getCommentsFromPublishedCollection,
-	deletePhotosFromPublishedCollection = PublishTask.deletePhotosFromPublishedCollection,
+	-- Images Processing function
+	processRenderedPhotos                            = PublishTask.processRenderedPhotos,
+	canAddCommentsToService                          = PublishTask.PublishTaskcanAddCommentsToService,
+	addCommentToPublishedPhoto                       = PublishTask.addCommentToPublishedPhoto,
+	getCommentsFromPublishedCollection               = PublishTask.getCommentsFromPublishedCollection,
+	deletePhotosFromPublishedCollection              = PublishTask.deletePhotosFromPublishedCollection,
 	shouldDeletePhotosFromServiceOnDeleteFromCatalog = PublishTask.shouldDeletePhotosFromServiceOnDeleteFromCatalog,
 
--- Published Collections / CollectionSets Processing functions
-	getCollectionBehaviorInfo = PublishTask.getCollectionBehaviorInfo,
- 	viewForCollectionSetSettings = PublishTask.viewForCollectionSetSettings,
-	updateCollectionSetSettings = PublishTask.updateCollectionSetSettings,
-	viewForCollectionSettings = PublishTask.viewForCollectionSettings,
-	updateCollectionSettings = PublishTask.updateCollectionSettings,
-	renamePublishedCollection = PublishTask.renamePublishedCollection,
-	reparentPublishedCollection =  PublishTask.reparentPublishedCollection,
-	shouldDeletePublishService = PublishTask.shouldDeletePublishService,
-	willDeletePublishService = PublishTask.willDeletePublishService,
-	deletePublishedCollection = PublishTask.deletePublishedCollection,
-	validatePublishedCollectionName = PublishTask.validatePublishedCollectionName,
-	
+	-- PublishService processing functions
+	didCreateNewPublishService                       = PublishTask.didCreateNewPublishService,
+	didUpdatePublishService                          = PublishTask.didUpdatePublishService,
+	shouldDeletePublishService                       = PublishTask.shouldDeletePublishService,
+	willDeletePublishService                         = PublishTask.willDeletePublishService,
+
+	-- Published Collections / CollectionSets Processing functions
+	getCollectionBehaviorInfo                        = PublishTask.getCollectionBehaviorInfo,
+	viewForCollectionSetSettings                     = PublishTask.viewForCollectionSetSettings,
+	updateCollectionSetSettings                      = PublishTask.updateCollectionSetSettings,
+	viewForCollectionSettings                        = PublishTask.viewForCollectionSettings,
+	updateCollectionSettings                         = PublishTask.updateCollectionSettings,
+	renamePublishedCollection                        = PublishTask.renamePublishedCollection,
+	reparentPublishedCollection                      = PublishTask.reparentPublishedCollection,
+	deletePublishedCollection                        = PublishTask.deletePublishedCollection,
+	validatePublishedCollectionName                  = PublishTask.validatePublishedCollectionName,
+
+	-- view on Piwigo Options
+	--goToPublishedCollection                          = PublishTask.goToPublishedCollection,
+	--goToPublishedPhoto                               = PublishTask.goToPublishedPhoto,
 }
