@@ -57,7 +57,7 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
         serviceState = PWStatusManager.getServiceState(publishService)
     end
     log:info("PublishTask.processRenderedPhotos - serviceState " .. utils.serialiseVar(serviceState))
-    if serviceState.isCloningSync then
+    if serviceState.isCloningSync and serviceState.isCloningSync == true then
         PWStatusManager.setisCloningSync(publishService, false)
         -- use minimal render photos for smart collection cloning
         PublishTask.processCloneSync(functionContext, exportContext)
@@ -495,10 +495,11 @@ function PublishTask.getCommentsFromPublishedCollection(publishSettings, arrayOf
 end
 
 -- ************************************************
-function PublishTaskcanAddCommentsToService(publishSettings)
+function PublishTask.canAddCommentsToService(publishSettings)
     log:info("PublishTask.canAddCommentToPublishedPhoto")
     -- check if Piwgo has comments enabled
-    local commentsEnabled = PiwigoAPI.pwCheckComments(publishSettings)
+    --local commentsEnabled = PiwigoAPI.pwCheckComments(publishSettings)
+    local commentsEnabled = true
     return commentsEnabled
 end
 

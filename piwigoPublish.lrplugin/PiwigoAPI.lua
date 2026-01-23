@@ -1430,14 +1430,14 @@ end
 function PiwigoAPI.getCommentInfos(propertyTable)
     -- return output from pwg.userComments.getList
     -- primarily used to check if comments are enabled on this Piwigo host
-    log:info("PiwigoAPI.getComments")
+    log:info("PiwigoAPI.getCommentInfos")
     local rtnStatus = {}
     rtnStatus.status = false
     rtnStatus.commentsEnabled = false
     -- successful connection, now get user role and token via pwg.session.getStatus
     local Params = { {
         name = "method",
-        value = "pwg.pwg.userComments.getList"
+        value = "pwg.userComments.getList"
     } }
     -- build headers to include cookies from pwConnect call
     local headers = {}
@@ -1448,9 +1448,9 @@ function PiwigoAPI.getCommentInfos(propertyTable)
     end
     local getResponse = httpGet(propertyTable.pwurl, Params, headers)
     if (not getResponse.response) then
-        log:info("PiwigoAPI.getComments - Params\n" .. utils.serialiseVar(Params))
-        log:info("PiwigoAPI.getComments - headers\n" .. utils.serialiseVar(headers))
-        log:info("PiwigoAPI.getComments - getResponse\n" .. utils.serialiseVar(getResponse))
+        log:info("PiwigoAPI.getCommentInfos - Params\n" .. utils.serialiseVar(Params))
+        log:info("PiwigoAPI.getCommentInfos - headers\n" .. utils.serialiseVar(headers))
+        log:info("PiwigoAPI.getCommentInfos - getResponse\n" .. utils.serialiseVar(getResponse))
         LrDialogs.message("Cannot get comments information from  Piwigo - Unknown error")
         return rtnStatus
     end
@@ -2340,10 +2340,6 @@ function PiwigoAPI.deletePhoto(propertyTable, pwCatID, pwImageID, callStatus)
         value = propertyTable.token
     } }
 
-    log:info("PiwigoAPI.deletePhoto - propertyTable \n " .. utils.serialiseVar(propertyTable))
-    log:info("PiwigoAPI.deletePhoto - params \n" .. utils.serialiseVar(params))
-    -- log:info("PiwigoAPI.deletePhoto - headrs \n" .. utils.serialiseVar(headers))
-
     local httpResponse, httpHeaders = LrHttp.postMultipart(propertyTable.pwurl, params, {
         headers = {
             field = "Cookie",
@@ -2351,9 +2347,6 @@ function PiwigoAPI.deletePhoto(propertyTable, pwCatID, pwImageID, callStatus)
             value = propertyTable.SessionCookie
         }
     })
-
-    log:info("PiwigoAPI.deletePhoto - httpResponse \n" .. utils.serialiseVar(httpResponse))
-    log:info("PiwigoAPI.deletePhoto - httpHeaders \n" .. utils.serialiseVar(httpHeaders))
 
     local body
     if httpResponse then
@@ -2365,10 +2358,18 @@ function PiwigoAPI.deletePhoto(propertyTable, pwCatID, pwImageID, callStatus)
             callStatus.status = true
             callStatus.statusMsg = ""
         else
+            log:info("PiwigoAPI.deletePhoto - propertyTable \n " .. utils.serialiseVar(propertyTable))
+            log:info("PiwigoAPI.deletePhoto - params \n" .. utils.serialiseVar(params))
+            log:info("PiwigoAPI.deletePhoto - httpResponse \n" .. utils.serialiseVar(httpResponse))
+            log:info("PiwigoAPI.deletePhoto - httpHeaders \n" .. utils.serialiseVar(httpHeaders))
             callStatus.status = false
             callStatus.statusMsg = body.message or ""
         end
     else
+        log:info("PiwigoAPI.deletePhoto - propertyTable \n " .. utils.serialiseVar(propertyTable))
+        log:info("PiwigoAPI.deletePhoto - params \n" .. utils.serialiseVar(params))
+        log:info("PiwigoAPI.deletePhoto - httpResponse \n" .. utils.serialiseVar(httpResponse))
+        log:info("PiwigoAPI.deletePhoto - httpHeaders \n" .. utils.serialiseVar(httpHeaders))
         callStatus.status = false
         callStatus.statusMsg = body.message or ""
     end
@@ -2464,12 +2465,6 @@ function PiwigoAPI.addComment(publishSettings, metaData)
         LrDialogs.message("PiwigoAPI.addComment - cannot connect to piwigo")
         return false
     end
-    --end
-    -- log:info("PiwigoAPI.addComment - publishSettings\n" .. utils.serialiseVar(publishSettings))
-    -- check role is admin level
-    --if publishSettings.userStatus ~= "webmaster" then
-    --    LrDialogs.message("PiwigoAPI.addComment - user needs webmaster role ")
-    --    return false
     --end
 
     -- get antispam token from image details (unique for each image)

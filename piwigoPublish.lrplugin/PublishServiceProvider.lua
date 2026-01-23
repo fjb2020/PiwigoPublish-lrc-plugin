@@ -86,7 +86,7 @@ return {
 
 	-- Images Processing function
 	processRenderedPhotos                            = PublishTask.processRenderedPhotos,
-	canAddCommentsToService                          = PublishTask.PublishTaskcanAddCommentsToService,
+	canAddCommentsToService                          = PublishTask.canAddCommentsToService,
 	addCommentToPublishedPhoto                       = PublishTask.addCommentToPublishedPhoto,
 	getCommentsFromPublishedCollection               = PublishTask.getCommentsFromPublishedCollection,
 	deletePhotosFromPublishedCollection              = PublishTask.deletePhotosFromPublishedCollection,
