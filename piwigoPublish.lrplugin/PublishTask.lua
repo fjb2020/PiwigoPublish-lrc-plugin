@@ -161,7 +161,6 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
 
         local lrPhoto = rendition.photo
         local remoteId = rendition.publishedPhotoId or ""
-<<<<<<< HEAD
         
         -- Detect photo already published in this service (multi-album support)
         local existingPwImageId = nil
@@ -199,9 +198,6 @@ function PublishTask.processRenderedPhotos(functionContext, exportContext)
             end
         end
         
-=======
-
->>>>>>> main
         -- Wait for next photo to render.
         local success, pathOrMessage = rendition:waitForRender()
         -- Check for cancellation again after photo has been rendered.
@@ -431,7 +427,6 @@ function PublishTask.deletePhotosFromPublishedCollection(publishSettings, arrayO
             log:info("PublishTask.deletePhotosFromPublishedCollection - dissociating photo " .. thispwImageID .. " from category " .. pwCatID)
             callStatus = PiwigoAPI.dissociateImageFromCategory(publishSettings, thispwImageID, pwCatID)
             if callStatus.status then
-<<<<<<< HEAD
                 -- Only clear metadata if photo is no longer in any other published collection
                 -- Check if photo exists in other collections of this service
                 local publishService = publishedCollection:getService()
@@ -453,18 +448,6 @@ function PublishTask.deletePhotosFromPublishedCollection(publishSettings, arrayO
                 else
                     log:info("PublishTask.deletePhotosFromPublishedCollection - photo " .. thispwImageID .. " still in other collections, keeping metadata")
                 end
-=======
-                local pluginData = {
-                    pwHostURL = "",
-                    albumName = "",
-                    albumUrl = "",
-                    imageUrl = "",
-                    pwUploadDate = "",
-                    pwUploadTime = "",
-                    pwCommentSync = ""
-                }
-                PiwigoAPI.storeMetaData(catalog, thisLrPhoto, pluginData)
->>>>>>> main
                 thisPhotoToUnpublish[4] = true
             else
                 PWStatusManager.setPiwigoBusy(publishService, false)

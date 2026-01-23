@@ -73,7 +73,6 @@ else
 end
 
 _G.iconPath = _PLUGIN:resourceId("icons/icon_med.png")
-<<<<<<< HEAD
 
 -- Build version string from Info.lua VERSION table
 local versionInfo = _PLUGIN.VERSION or { major = 0, minor = 0, revision = 0 }
@@ -92,8 +91,5 @@ LrTasks.startAsyncTask(function()
         UpdateChecker.checkForUpdates(true) -- silent = true
     end
 end)
-=======
-_G.pluginVersion = "20260122.27"
->>>>>>> main
 --_G.LocStrings = utils.loadStrings()
 

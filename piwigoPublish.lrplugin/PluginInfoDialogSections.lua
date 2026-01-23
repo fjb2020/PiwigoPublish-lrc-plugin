@@ -77,7 +77,6 @@ function PluginInfoDialogSections.sectionsForBottomOfDialog(f, propertyTable)
         {
             bind_to_object = propertyTable,
 
-<<<<<<< HEAD
             title = "Plugin Updates",
 
             f:row {
@@ -116,9 +115,6 @@ function PluginInfoDialogSections.sectionsForBottomOfDialog(f, propertyTable)
             bind_to_object = propertyTable,
 
             title = "Piwigo Publisher Plugin Logging",
-=======
-            title = "Piwigo Publisher Plugin Logging and Preferences",
->>>>>>> main
 
             f:row {
                 f:checkbox {
