@@ -25,7 +25,6 @@ return {
     LrPluginName = "Piwigo Publisher",
     -- typo in PwigoPublish is noted but can't be changed without forcing all services using this plugin to be re-initialised.
     LrToolkitIdentifier = "fiona.boston.PwigoPublish",
-    -- LrToolkitIdentifier = "fiona.boston.PiwigoPublish",
     LrMetadataProvider  = 'CustomMetadata.lua',
     LrMetadataTagsetFactory = 'Tagset.lua',
     LrInitPlugin = "Init.lua",
@@ -67,5 +66,5 @@ return {
     
 	LrPluginInfoProvider = 'PluginInfo.lua',
 
-    VERSION = { major=20260122, minor=27, revision=0 },
+    VERSION = { major=20260124, minor=28, revision=0 },
 }

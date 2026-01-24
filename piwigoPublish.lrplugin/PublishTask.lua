@@ -28,7 +28,7 @@ PublishTask = {}
 function PublishTask.processRenderedPhotos(functionContext, exportContext)
     -- render photos and upload to Piwigo
 
-    log:info("PublishTask.processRenderedPhotos")
+    log:info("PublishTask.processRenderedPhotos - version: " .. utils.serialiseVar(_PLUGIN.VERSION))
     local callStatus = {}
     local catalog = LrApplication.activeCatalog()
     local exportSession = exportContext.exportSession

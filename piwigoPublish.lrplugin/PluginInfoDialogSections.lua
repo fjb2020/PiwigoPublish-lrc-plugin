@@ -31,12 +31,10 @@ local function resetPluginPrefs(prefix)
     log:info("resetPluginPrefs \n" .. utils.serialiseVar(prefs))
     for k, p in prefs:pairs() do
         if prefix then
-            log:info("resetting " .. utils.serialiseVar(k))
             if k:find(prefix, 1, true) == 1 then
                 prefs[k] = nil
             end
         else
-            log:info("resetting " .. utils.serialiseVar(k))
             prefs[k] = nil
         end
     end
@@ -63,6 +61,7 @@ function PluginInfoDialogSections.startDialog(propertyTable)
     else
         log:disable()
     end
+ 
     propertyTable.debugEnabled = prefs.debugEnabled
     propertyTable.debugToFile = prefs.debugToFile
 end

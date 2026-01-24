@@ -22,9 +22,11 @@ You should have received a copy of the GNU General Public License along with thi
 
 As a user of both Lightroom Classic and Piwigo, the ability use the powerful Publishing Service in LrC to keep my Piwigo galleries up to date is very appealing. I've been a long time user of a popular plugin that has been providing this functionality, but unfortunately since the version 15 release of LrC that has not been available. 
 
-This plugin is my attempt to allow me to continue publishing to Piwigo from LrC, and I have looked at the work of others for help and ideas in developing this plugin. In particular, the following should be credited:
+This plugin was developed to allow me to continue publishing to Piwigo from LrC, and I have looked at the work of others for help and ideas in developing this plugin. In particular, the following should be credited:
 
 [All the contributers to Piwigo](https://piwigo.org/)
+
+[Julien Moreau for contributing various improvements](https://julien-moreau.fr/)
 
 [Jeffrey Friedl for JSON.lua](http://regex.info/blog/lua/json)
 

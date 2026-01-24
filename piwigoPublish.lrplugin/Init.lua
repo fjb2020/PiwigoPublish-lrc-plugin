@@ -75,7 +75,12 @@ end
 _G.iconPath = _PLUGIN:resourceId("icons/icon_med.png")
 
 -- Build version string from Info.lua VERSION table
-local versionInfo = _PLUGIN.VERSION or { major = 0, minor = 0, revision = 0 }
+--local versionInfo = _PLUGIN.VERSION or { major = 0, minor = 0, revision = 0 }
+-- _PLUGIN.VERSION is nil here for some reason, so hardcoding for now
+-- just need to ensure both places are updated together
+
+_G.versionInfo = { major=20260122, minor=27, revision=0 }
+
 _G.pluginVersion = string.format("%d.%d", versionInfo.major, versionInfo.minor)
 -- Auto-update checker
 _G.UpdateChecker = require "UpdateChecker"
@@ -91,5 +96,5 @@ LrTasks.startAsyncTask(function()
         UpdateChecker.checkForUpdates(true) -- silent = true
     end
 end)
---_G.LocStrings = utils.loadStrings()
+
 

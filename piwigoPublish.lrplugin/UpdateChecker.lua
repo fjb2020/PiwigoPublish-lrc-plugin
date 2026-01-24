@@ -31,7 +31,7 @@ local LrDate = import 'LrDate'
 local UpdateChecker = {}
 
 -- Configuration
-UpdateChecker.GITHUB_OWNER = "Gotcha26"
+UpdateChecker.GITHUB_OWNER = "Piwigo"
 UpdateChecker.GITHUB_REPO = "PiwigoPublish-lrc-plugin"
 UpdateChecker.CHECK_INTERVAL_DAYS = 1
 
@@ -90,9 +90,12 @@ function UpdateChecker.getInstalledVersionDate()
     -- For date-based: extracts YYYYMMDD from "20260111.26"
     -- For semver: uses a stored build date or returns 0
     
-    local versionInfo = _PLUGIN.VERSION or { major = 0, minor = 0, revision = 0 }
+    --local versionInfo = _PLUGIN.VERSION or { major = 0, minor = 0, revision = 0 }
+    -- _PLUGIN.VERSION is nil here for some reason
+    -- use _G.versionInfo set in Init.lua 
+    log:info("UpdateChecker.getInstalledVersionDate - versionInfo\n" .. utils.serialiseVar(versionInfo))
     local major = versionInfo.major or 0
-    
+    log:info("UpdateChecker.getInstalledVersionDate - major: " .. tostring(major))
     if major >= 20000000 then
         -- Date-based: major IS the date
         return major
@@ -138,8 +141,10 @@ function UpdateChecker.checkForUpdates(silent)
         
         -- Update last check timestamp
         prefs.lastUpdateCheck = LrDate.currentTime()
-        
+        log:info("UpdateChecker.checkForUpdates - response\n" .. utils.serialiseVar(response))
+        log:info("UpdateChecker.checkForUpdates - headers\n" .. utils.serialiseVar(headers))        
         -- Handle errors
+
         if not response or (headers and headers.status ~= 200) then
             log:info("UpdateChecker.checkForUpdates - failed to fetch release info")
             if not silent then
